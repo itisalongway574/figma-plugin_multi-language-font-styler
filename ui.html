@@ -1,0 +1,1169 @@
+<!-- UI.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      font-family: Inter, sans-serif;
+      font-size: 12px;
+      margin: 0;
+      padding: 12px;
+    }
+
+    h1 {
+      font-size: 16px;
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: 14px;
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+
+    h3 {
+      font-size: 13px;
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
+
+    .section {
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .form-row {
+      display: flex;
+      margin-bottom: 6px;
+      align-items: center;
+    }
+
+    .form-row label {
+      width: 80px;
+      font-weight: 500;
+      display: none;
+    }
+
+    select,
+    input {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid #e5e5e5;
+      width: 100%;
+    }
+
+    button {
+      background-color: #9E7A4E;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 14px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
+    button.secondary {
+      background-color: #f5f5f5;
+      color: #333;
+      border: 1px solid #e5e5e5;
+    }
+
+    .plugin-name {
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+
+    .version {
+      padding: 0;
+      margin: 0;
+      margin-bottom: 12px;
+      color: #aaa;
+    }
+
+    .preset-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      border: 1px solid #e5e5e5;
+    }
+
+    .preset-item:hover {
+      background-color: #f5f5f5;
+    }
+
+    .preset-controls {
+      display: flex;
+      gap: 4px;
+    }
+
+    .preset-controls button {
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    .icon-button {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      padding: 6px 8px;
+      margin-bottom: 12px;
+      background-color: #f0f0f0;
+      border-radius: 4px;
+      color: #666;
+      font-size: 11px;
+    }
+
+    .status.warn {
+      background-color: #fff2e8;
+      color: #d4380d;
+    }
+
+    .type-selector {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      width: 100%;
+    }
+
+    .type-selector button {
+      flex: 1;
+      padding: 5px 0;
+      font-size: 11px;
+      background-color: #f5f5f5;
+      color: #333;
+      border: 1px solid #e5e5e5;
+    }
+
+    .type-selector button.active {
+      background-color: #9E7A4E;
+      color: white;
+      border-color: #9E7A4E;
+    }
+
+    .nested-form {
+      margin-left: 20px;
+      margin-top: 8px;
+    }
+
+    .font-settings {
+      border-left: 2px solid #e5e5e5;
+      padding-left: 8px;
+      margin-top: 4px;
+    }
+
+    select[id$="FontFamily"] {
+      background-color: #f9f9f9;
+    }
+
+    select[id$="FontWeight"] {
+      background-color: #f5f5f5;
+    }
+
+    select[id$="FontSize"] {
+      background-color: #f0f0f0;
+      width: 100%;
+    }
+
+    #chineseFontSettings,
+    #englishFontSettings,
+    #numberFontSettings {
+      padding-left: 0;
+    }
+
+    select option:first-child {
+      color: #666;
+    }
+
+    #applyButton {
+      margin-top: 16px;
+    }
+
+    #chineseTextStyleSettings,
+    #englishTextStyleSettings,
+    #numberTextStyleSettings {
+      margin-bottom: 8px;
+    }
+
+    select {
+      margin-bottom: 5px;
+      font-size: 12px;
+      height: 30px;
+    }
+
+    #presetsList {
+      max-height: 150px;
+      overflow-y: auto;
+      margin-top: 8px;
+    }
+
+    .font-size-input-container {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+
+    .font-size-select {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid #e5e5e5;
+      width: 100%;
+      display: block;
+    }
+
+    .font-size-input {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid #e5e5e5;
+      width: 100%;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <h1 class="plugin-name">dev複合字型轉換器</h1>
+  <h5 class="version">version: 20250407</h5>
+
+  <div id="selectionStatus" class="status warn">
+    請選擇一個文字圖層
+  </div>
+
+  <div class="section">
+    <h2>繁體中文</h2>
+    <div class="type-selector">
+      <button id="chineseTypeFont" class="active">Font</button>
+      <button id="chineseTypeTextStyle">Text Style</button>
+    </div>
+
+    <div id="chineseTextStyleSettings" style="display:none">
+      <div class="form-row">
+        <label>Text Style</label>
+        <select id="chineseStyle">
+          <option value="">請選擇中文字型樣式</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="chineseFontSettings" class="font-settings">
+      <div class="form-row">
+        <label>字型家族</label>
+        <select id="chineseFontFamily">
+          <option value="">選擇中文字型家族</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>字型粗細</label>
+        <select id="chineseFontWeight">
+          <option value="">選擇中文字型粗細</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>字型大小</label>
+        <div class="font-size-input-container">
+          <select id="chineseFontSize" class="font-size-select">
+            <option value="keep">維持原先字級</option>
+            <option value="12">12</option>
+            <option value="14">14</option>
+            <option value="16">16</option>
+            <option value="18">18</option>
+            <option value="20">20</option>
+            <option value="24">24</option>
+            <option value="28">28</option>
+            <option value="32">32</option>
+            <option value="36">36</option>
+            <option value="48">48</option>
+            <option value="64">64</option>
+            <option value="72">72</option>
+            <option value="custom">自定義...</option>
+          </select>
+          <input type="number" id="chineseFontSizeCustom" class="font-size-input" placeholder="輸入數字" min="1" max="1000"
+            style="display: none;">
+        </div>
+      </div>
+    </div>
+
+    <h2>英文</h2>
+    <div class="type-selector">
+      <button id="englishTypeFont" class="active">Font</button>
+      <button id="englishTypeTextStyle">Text Style</button>
+    </div>
+
+    <div id="englishTextStyleSettings" style="display:none">
+      <div class="form-row">
+        <label>Text Style</label>
+        <select id="englishStyle">
+          <option value="">請選擇英文字型樣式</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="englishFontSettings" class="font-settings">
+      <div class="form-row">
+        <label>字型家族</label>
+        <select id="englishFontFamily">
+          <option value="">選擇英文字型家族</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>字型粗細</label>
+        <select id="englishFontWeight">
+          <option value="">選擇英文字型粗細</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>字型大小</label>
+        <div class="font-size-input-container">
+          <select id="englishFontSize" class="font-size-select">
+            <option value="keep">維持原先字級</option>
+            <option value="12">12</option>
+            <option value="14">14</option>
+            <option value="16">16</option>
+            <option value="18">18</option>
+            <option value="20">20</option>
+            <option value="24">24</option>
+            <option value="28">28</option>
+            <option value="32">32</option>
+            <option value="36">36</option>
+            <option value="48">48</option>
+            <option value="64">64</option>
+            <option value="72">72</option>
+            <option value="custom">自定義...</option>
+          </select>
+          <input type="number" id="englishFontSizeCustom" class="font-size-input" placeholder="輸入數字" min="1" max="1000"
+            style="display: none;">
+        </div>
+      </div>
+    </div>
+
+    <h2>數字</h2>
+    <div class="type-selector">
+      <button id="numberTypeFont" class="active">Font</button>
+      <button id="numberTypeTextStyle">Text Style</button>
+    </div>
+
+    <div id="numberTextStyleSettings" style="display:none">
+      <div class="form-row">
+        <label>Text Style</label>
+        <select id="numberStyle">
+          <option value="">請選擇數字字型樣式</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="numberFontSettings" class="font-settings">
+      <div class="form-row">
+        <label>字型家族</label>
+        <select id="numberFontFamily">
+          <option value="">選擇數字字型家族</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>字型粗細</label>
+        <select id="numberFontWeight">
+          <option value="">選擇數字字型粗細</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>字型大小</label>
+        <div class="font-size-input-container">
+          <select id="numberFontSize" class="font-size-select">
+            <option value="keep">維持原先字級</option>
+            <option value="12">12</option>
+            <option value="14">14</option>
+            <option value="16">16</option>
+            <option value="18">18</option>
+            <option value="20">20</option>
+            <option value="24">24</option>
+            <option value="28">28</option>
+            <option value="32">32</option>
+            <option value="36">36</option>
+            <option value="48">48</option>
+            <option value="64">64</option>
+            <option value="72">72</option>
+            <option value="custom">自定義...</option>
+          </select>
+          <input type="number" id="numberFontSizeCustom" class="font-size-input" placeholder="輸入數字" min="1" max="1000"
+            style="display: none;">
+        </div>
+      </div>
+    </div>
+
+    <button id="applyButton" disabled>應用樣式</button>
+  </div>
+
+  <div class="section">
+    <h2>預設集</h2>
+
+    <div class="form-row">
+      <label>預設集名稱</label>
+      <input id="presetName" type="text" placeholder="輸入預設集名稱 (保存當前設置)">
+    </div>
+
+    <button id="savePresetButton">保存為預設集</button>
+
+    <h3>已保存預設集</h3>
+    <div id="presetsList">
+      <!-- 預設集列表將動態生成 -->
+    </div>
+  </div>
+
+  <script>
+    // 元素引用
+    // Text Style 選擇器
+    const chineseStyleSelect = document.getElementById('chineseStyle');
+    const englishStyleSelect = document.getElementById('englishStyle');
+    const numberStyleSelect = document.getElementById('numberStyle');
+
+    // 類型選擇按鈕
+    const chineseTypeTextStyle = document.getElementById('chineseTypeTextStyle');
+    const chineseTypeFont = document.getElementById('chineseTypeFont');
+    const englishTypeTextStyle = document.getElementById('englishTypeTextStyle');
+    const englishTypeFont = document.getElementById('englishTypeFont');
+    const numberTypeTextStyle = document.getElementById('numberTypeTextStyle');
+    const numberTypeFont = document.getElementById('numberTypeFont');
+
+    // 設置容器
+    const chineseTextStyleSettings = document.getElementById('chineseTextStyleSettings');
+    const chineseFontSettings = document.getElementById('chineseFontSettings');
+    const englishTextStyleSettings = document.getElementById('englishTextStyleSettings');
+    const englishFontSettings = document.getElementById('englishFontSettings');
+    const numberTextStyleSettings = document.getElementById('numberTextStyleSettings');
+    const numberFontSettings = document.getElementById('numberFontSettings');
+
+    // 字型選擇器
+    const chineseFontFamily = document.getElementById('chineseFontFamily');
+    const chineseFontWeight = document.getElementById('chineseFontWeight');
+    const chineseFontSize = document.getElementById('chineseFontSize');
+    const englishFontFamily = document.getElementById('englishFontFamily');
+    const englishFontWeight = document.getElementById('englishFontWeight');
+    const englishFontSize = document.getElementById('englishFontSize');
+    const numberFontFamily = document.getElementById('numberFontFamily');
+    const numberFontWeight = document.getElementById('numberFontWeight');
+    const numberFontSize = document.getElementById('numberFontSize');
+
+    const applyButton = document.getElementById('applyButton');
+    const selectionStatus = document.getElementById('selectionStatus');
+    const presetNameInput = document.getElementById('presetName');
+    const savePresetButton = document.getElementById('savePresetButton');
+    const presetsList = document.getElementById('presetsList');
+
+    // 添加字体大小自定义输入引用
+    const chineseFontSizeCustom = document.getElementById('chineseFontSizeCustom');
+    const englishFontSizeCustom = document.getElementById('englishFontSizeCustom');
+    const numberFontSizeCustom = document.getElementById('numberFontSizeCustom');
+
+    // 存儲數據
+    let textStyles = [];
+    let fontFamilies = {};
+    let presets = [];
+    let hasTextNodeSelected = false;
+
+    // 當前設置類型
+    let chineseSettingType = 'font';
+    let englishSettingType = 'font';
+    let numberSettingType = 'font';
+
+    // 填充 Text Styles 下拉菜單
+    function populateTextStyles(styles) {
+      const selectElements = [chineseStyleSelect, englishStyleSelect, numberStyleSelect];
+
+      for (const select of selectElements) {
+        // 清空現有選項（保留第一個）
+        while (select.options.length > 1) {
+          select.remove(1);
+        }
+
+        // 添加新選項
+        for (const style of styles) {
+          const option = document.createElement('option');
+          option.value = style.id;
+          option.textContent = style.name;
+          select.appendChild(option);
+        }
+      }
+    }
+
+    // 填充字型家族下拉菜單
+    function populateFontFamilies(fonts) {
+      const selectElements = [
+        { select: chineseFontFamily, weightSelect: chineseFontWeight, type: chineseSettingType },
+        { select: englishFontFamily, weightSelect: englishFontWeight, type: englishSettingType },
+        { select: numberFontFamily, weightSelect: numberFontWeight, type: numberSettingType }
+      ];
+
+      for (const { select, weightSelect, type } of selectElements) {
+        // 保存当前选中值
+        const currentValue = select.value;
+
+        // 清空现有选项（保留第一个）
+        while (select.options.length > 1) {
+          select.remove(1);
+        }
+
+        // 添加新选项
+        for (const family in fonts) {
+          const option = document.createElement('option');
+          option.value = family;
+          option.textContent = family;
+          select.appendChild(option);
+        }
+
+        // 如果先前有值，尝试恢复
+        if (currentValue && select.querySelector(`option[value="${currentValue}"]`)) {
+          select.value = currentValue;
+        }
+        // 確保預設顯示第一個選項（提示選項），而不是自動選擇第一個字型
+        else {
+          select.selectedIndex = 0;
+        }
+      }
+
+      // 更新按钮状态
+      updateButtonState();
+    }
+
+    // 更新字型粗細選項
+    function updateFontWeights(familySelect, weightSelect) {
+      const family = familySelect.value;
+
+      // 清空現有選項（保留第一個）
+      while (weightSelect.options.length > 1) {
+        weightSelect.remove(1);
+      }
+
+      if (family && fontFamilies[family]) {
+        // 添加該字型家族的所有可用粗細選項
+        for (const weight of fontFamilies[family]) {
+          const option = document.createElement('option');
+          option.value = weight;
+          option.textContent = weight;
+          weightSelect.appendChild(option);
+        }
+
+        // 自動選擇第一個選項（如果存在）
+        if (weightSelect.options.length > 1) {
+          weightSelect.selectedIndex = 1;
+          updateButtonState(); // 更新按鈕狀態
+        }
+      }
+    }
+
+    // 更新預設集列表
+    function updatePresetsList() {
+      presetsList.innerHTML = '';
+
+      if (presets.length === 0) {
+        presetsList.innerHTML = '<p style="color: #666; text-align: center; padding: 10px;">尚無保存的預設集</p>';
+        return;
+      }
+
+      for (const preset of presets) {
+        const presetItem = document.createElement('div');
+        presetItem.className = 'preset-item';
+
+        const presetName = document.createElement('div');
+        presetName.textContent = preset.name;
+        presetName.style.fontWeight = '500';
+
+        const presetControls = document.createElement('div');
+        presetControls.className = 'preset-controls';
+
+        const loadButton = document.createElement('button');
+        loadButton.textContent = '套用';
+        loadButton.className = 'secondary';
+        loadButton.onclick = () => loadPreset(preset.id);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = '刪除';
+        deleteButton.className = 'secondary';
+        deleteButton.style.backgroundColor = '#fff0f0';
+        deleteButton.style.color = '#d4380d';
+        deleteButton.onclick = () => deletePreset(preset.id);
+
+        presetControls.appendChild(loadButton);
+        presetControls.appendChild(deleteButton);
+
+        presetItem.appendChild(presetName);
+        presetItem.appendChild(presetControls);
+
+        presetsList.appendChild(presetItem);
+      }
+    }
+
+    // 切換設置類型
+    function toggleSettingType(language, type) {
+      if (language === 'chinese') {
+        chineseSettingType = type;
+        if (type === 'textStyle') {
+          chineseTypeTextStyle.classList.add('active');
+          chineseTypeFont.classList.remove('active');
+          chineseTextStyleSettings.style.display = 'block';
+          chineseFontSettings.style.display = 'none';
+        } else {
+          chineseTypeTextStyle.classList.remove('active');
+          chineseTypeFont.classList.add('active');
+          chineseTextStyleSettings.style.display = 'none';
+          chineseFontSettings.style.display = 'block';
+
+          // 移除自動選擇第一個選項的邏輯
+          // 讓用戶手動選擇字型家族
+        }
+      } else if (language === 'english') {
+        englishSettingType = type;
+        if (type === 'textStyle') {
+          englishTypeTextStyle.classList.add('active');
+          englishTypeFont.classList.remove('active');
+          englishTextStyleSettings.style.display = 'block';
+          englishFontSettings.style.display = 'none';
+        } else {
+          englishTypeTextStyle.classList.remove('active');
+          englishTypeFont.classList.add('active');
+          englishTextStyleSettings.style.display = 'none';
+          englishFontSettings.style.display = 'block';
+
+          // 移除自動選擇第一個選項的邏輯
+          // 讓用戶手動選擇字型家族
+        }
+      } else if (language === 'number') {
+        numberSettingType = type;
+        if (type === 'textStyle') {
+          numberTypeTextStyle.classList.add('active');
+          numberTypeFont.classList.remove('active');
+          numberTextStyleSettings.style.display = 'block';
+          numberFontSettings.style.display = 'none';
+        } else {
+          numberTypeTextStyle.classList.remove('active');
+          numberTypeFont.classList.add('active');
+          numberTextStyleSettings.style.display = 'none';
+          numberFontSettings.style.display = 'block';
+
+          // 移除自動選擇第一個選項的邏輯
+          // 讓用戶手動選擇字型家族
+        }
+      }
+
+      updateButtonState();
+    }
+
+    // 更新按鈕狀態
+    function updateButtonState() {
+      // 檢查各個語系是否有設置
+      let chineseSettingValid = false;
+      let englishSettingValid = false;
+      let numberSettingValid = false;
+
+      // 檢查中文設置
+      if (chineseSettingType === 'textStyle' && chineseStyleSelect.value) {
+        chineseSettingValid = true;
+      } else if (chineseSettingType === 'font' && chineseFontFamily.value && chineseFontWeight.value) {
+        chineseSettingValid = true;
+      }
+
+      // 檢查英文設置
+      if (englishSettingType === 'textStyle' && englishStyleSelect.value) {
+        englishSettingValid = true;
+      } else if (englishSettingType === 'font' && englishFontFamily.value && englishFontWeight.value) {
+        englishSettingValid = true;
+      }
+
+      // 檢查數字設置
+      if (numberSettingType === 'textStyle' && numberStyleSelect.value) {
+        numberSettingValid = true;
+      } else if (numberSettingType === 'font' && numberFontFamily.value && numberFontWeight.value) {
+        numberSettingValid = true;
+      }
+
+      // 至少有一個語系設置有效，且選中了文字圖層
+      const hasAnyValidSetting = chineseSettingValid || englishSettingValid || numberSettingValid;
+      applyButton.disabled = !hasTextNodeSelected || !hasAnyValidSetting;
+
+      // 更新選擇狀態提示
+      if (hasTextNodeSelected) {
+        selectionStatus.textContent = '已選擇文字圖層';
+        selectionStatus.classList.remove('warn');
+      } else {
+        selectionStatus.textContent = '請選擇一個文字圖層';
+        selectionStatus.classList.add('warn');
+      }
+
+      // 保存預設集按鈕：需要有名稱且至少一個語系設置有效
+      savePresetButton.disabled = !presetNameInput.value.trim() || !hasAnyValidSetting;
+    }
+
+    // 獲取當前設置
+    function getCurrentSettings() {
+      // 中文設置
+      let chineseSettings = { type: chineseSettingType };
+      if (chineseSettingType === 'textStyle') {
+        chineseSettings.styleId = chineseStyleSelect.value;
+      } else {
+        chineseSettings.fontFamily = chineseFontFamily.value;
+        chineseSettings.fontWeight = chineseFontWeight.value;
+        chineseSettings.fontSize = getFontSizeValue(chineseFontSize, chineseFontSizeCustom);
+      }
+
+      // 英文設置
+      let englishSettings = { type: englishSettingType };
+      if (englishSettingType === 'textStyle') {
+        englishSettings.styleId = englishStyleSelect.value;
+      } else {
+        englishSettings.fontFamily = englishFontFamily.value;
+        englishSettings.fontWeight = englishFontWeight.value;
+        englishSettings.fontSize = getFontSizeValue(englishFontSize, englishFontSizeCustom);
+      }
+
+      // 數字設置
+      let numberSettings = { type: numberSettingType };
+      if (numberSettingType === 'textStyle') {
+        numberSettings.styleId = numberStyleSelect.value;
+      } else {
+        numberSettings.fontFamily = numberFontFamily.value;
+        numberSettings.fontWeight = numberFontWeight.value;
+        numberSettings.fontSize = getFontSizeValue(numberFontSize, numberFontSizeCustom);
+      }
+
+      return {
+        chineseSettings,
+        englishSettings,
+        numberSettings
+      };
+    }
+
+    // 應用字型樣式
+    function applyStyles() {
+      const settings = getCurrentSettings();
+
+      parent.postMessage({
+        pluginMessage: {
+          type: 'applyStyles',
+          chineseSettings: settings.chineseSettings,
+          englishSettings: settings.englishSettings,
+          numberSettings: settings.numberSettings
+        }
+      }, '*');
+    }
+
+    // 保存預設集
+    function savePreset() {
+      const name = presetNameInput.value.trim();
+
+      if (!name) {
+        alert('請輸入預設集名稱');
+        return;
+      }
+
+      const settings = getCurrentSettings();
+
+      parent.postMessage({
+        pluginMessage: {
+          type: 'savePreset',
+          name: name,
+          chineseSettings: settings.chineseSettings,
+          englishSettings: settings.englishSettings,
+          numberSettings: settings.numberSettings
+        }
+      }, '*');
+
+      // 清空輸入
+      presetNameInput.value = '';
+    }
+
+    // 載入預設集
+    function loadPreset(presetId) {
+      parent.postMessage({
+        pluginMessage: {
+          type: 'loadPreset',
+          presetId: presetId
+        }
+      }, '*');
+    }
+
+    // 刪除預設集
+    function deletePreset(presetId) {
+      if (confirm('確定要刪除這個預設集嗎？')) {
+        parent.postMessage({
+          pluginMessage: {
+            type: 'deletePreset',
+            presetId: presetId
+          }
+        }, '*');
+      }
+    }
+
+    // 處理字体大小选择改变事件
+    function handleFontSizeChange(selectElement, inputElement) {
+      if (selectElement.value === 'custom') {
+        // 如果选择"自定义"，显示输入框
+        inputElement.style.display = 'block';
+        selectElement.style.display = 'none';
+        inputElement.focus();
+      }
+    }
+
+    // 處理字体大小输入事件
+    function handleFontSizeInput(inputElement, selectElement) {
+      const value = inputElement.value.trim();
+
+      // 当输入值为空或焦点离开且无有效值时，恢复选择框
+      if (!value) {
+        selectElement.value = 'keep'; // 默认选择"维持原先字级"
+        inputElement.style.display = 'none';
+        selectElement.style.display = 'block';
+      }
+    }
+
+    // 處理字体大小输入框按键事件
+    function handleFontSizeKeydown(event, inputElement, selectElement) {
+      // 当按下Enter键时，应用输入的值
+      if (event.key === 'Enter') {
+        const value = inputElement.value.trim();
+
+        if (value && !isNaN(parseInt(value))) {
+          // 添加或选择对应的选项
+          let optionExists = false;
+          for (let i = 0; i < selectElement.options.length; i++) {
+            if (selectElement.options[i].value === value) {
+              selectElement.selectedIndex = i;
+              optionExists = true;
+              break;
+            }
+          }
+
+          // 如果值不存在于预设选项中，保持custom选项
+          if (!optionExists) {
+            selectElement.value = 'custom';
+          }
+
+          // 隐藏输入框，显示选择框
+          inputElement.style.display = 'none';
+          selectElement.style.display = 'block';
+
+          // 触发按钮状态更新
+          updateButtonState();
+        }
+      }
+
+      // ESC键取消输入
+      if (event.key === 'Escape') {
+        selectElement.value = 'keep';
+        inputElement.style.display = 'none';
+        selectElement.style.display = 'block';
+        updateButtonState();
+      }
+    }
+
+    // 處理字体大小输入框失去焦点事件
+    function handleFontSizeBlur(inputElement, selectElement) {
+      const value = inputElement.value.trim();
+
+      if (value && !isNaN(parseInt(value))) {
+        // 保留输入的值
+        selectElement.value = 'custom';
+      } else {
+        // 恢复默认值
+        selectElement.value = 'keep';
+        inputElement.style.display = 'none';
+        selectElement.style.display = 'block';
+      }
+
+      updateButtonState();
+    }
+
+    // 获取字体大小的实际值（用于获取当前设置和应用样式）
+    function getFontSizeValue(selectElement, inputElement) {
+      if (selectElement.value === 'custom') {
+        const value = inputElement.value.trim();
+        if (value && !isNaN(parseInt(value))) {
+          return value;
+        }
+        return 'keep'; // 如果无有效值，默认保持原字级
+      }
+      return selectElement.value;
+    }
+
+    // 修改getCurrentSettings函数以使用新的字体大小获取方法
+    function getCurrentSettings() {
+      // 中文设置
+      let chineseSettings = { type: chineseSettingType };
+      if (chineseSettingType === 'textStyle') {
+        chineseSettings.styleId = chineseStyleSelect.value;
+      } else {
+        chineseSettings.fontFamily = chineseFontFamily.value;
+        chineseSettings.fontWeight = chineseFontWeight.value;
+        chineseSettings.fontSize = getFontSizeValue(chineseFontSize, chineseFontSizeCustom);
+      }
+
+      // 英文设置
+      let englishSettings = { type: englishSettingType };
+      if (englishSettingType === 'textStyle') {
+        englishSettings.styleId = englishStyleSelect.value;
+      } else {
+        englishSettings.fontFamily = englishFontFamily.value;
+        englishSettings.fontWeight = englishFontWeight.value;
+        englishSettings.fontSize = getFontSizeValue(englishFontSize, englishFontSizeCustom);
+      }
+
+      // 数字设置
+      let numberSettings = { type: numberSettingType };
+      if (numberSettingType === 'textStyle') {
+        numberSettings.styleId = numberStyleSelect.value;
+      } else {
+        numberSettings.fontFamily = numberFontFamily.value;
+        numberSettings.fontWeight = numberFontWeight.value;
+        numberSettings.fontSize = getFontSizeValue(numberFontSize, numberFontSizeCustom);
+      }
+
+      return {
+        chineseSettings,
+        englishSettings,
+        numberSettings
+      };
+    }
+
+    // 绑定事件处理函数
+    chineseFontSize.addEventListener('change', () => handleFontSizeChange(chineseFontSize, chineseFontSizeCustom));
+    chineseFontSizeCustom.addEventListener('input', () => handleFontSizeInput(chineseFontSizeCustom, chineseFontSize));
+    chineseFontSizeCustom.addEventListener('keydown', (e) => handleFontSizeKeydown(e, chineseFontSizeCustom, chineseFontSize));
+    chineseFontSizeCustom.addEventListener('blur', () => handleFontSizeBlur(chineseFontSizeCustom, chineseFontSize));
+
+    englishFontSize.addEventListener('change', () => handleFontSizeChange(englishFontSize, englishFontSizeCustom));
+    englishFontSizeCustom.addEventListener('input', () => handleFontSizeInput(englishFontSizeCustom, englishFontSize));
+    englishFontSizeCustom.addEventListener('keydown', (e) => handleFontSizeKeydown(e, englishFontSizeCustom, englishFontSize));
+    englishFontSizeCustom.addEventListener('blur', () => handleFontSizeBlur(englishFontSizeCustom, englishFontSize));
+
+    numberFontSize.addEventListener('change', () => handleFontSizeChange(numberFontSize, numberFontSizeCustom));
+    numberFontSizeCustom.addEventListener('input', () => handleFontSizeInput(numberFontSizeCustom, numberFontSize));
+    numberFontSizeCustom.addEventListener('keydown', (e) => handleFontSizeKeydown(e, numberFontSizeCustom, numberFontSize));
+    numberFontSizeCustom.addEventListener('blur', () => handleFontSizeBlur(numberFontSizeCustom, numberFontSize));
+
+    // 修改设置预设集数据函数，支持自定义字体大小
+    function setPresetData(preset) {
+      // 设置中文选项
+      if (preset.chineseSettings) {
+        if (preset.chineseSettings.type === 'textStyle') {
+          toggleSettingType('chinese', 'textStyle');
+          chineseStyleSelect.value = preset.chineseSettings.styleId || '';
+        } else {
+          toggleSettingType('chinese', 'font');
+          chineseFontFamily.value = preset.chineseSettings.fontFamily || '';
+          updateFontWeights(chineseFontFamily, chineseFontWeight);
+          chineseFontWeight.value = preset.chineseSettings.fontWeight || '';
+
+          // 处理字体大小
+          const fontSize = preset.chineseSettings.fontSize || 'keep';
+          const predefinedSizes = ['keep', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48', '64', '72'];
+
+          if (predefinedSizes.includes(fontSize)) {
+            chineseFontSize.value = fontSize;
+            chineseFontSizeCustom.style.display = 'none';
+            chineseFontSize.style.display = 'block';
+          } else {
+            chineseFontSize.value = 'custom';
+            chineseFontSizeCustom.value = fontSize;
+            chineseFontSizeCustom.style.display = 'block';
+            chineseFontSize.style.display = 'none';
+          }
+        }
+      }
+
+      // 设置英文选项
+      if (preset.englishSettings) {
+        if (preset.englishSettings.type === 'textStyle') {
+          toggleSettingType('english', 'textStyle');
+          englishStyleSelect.value = preset.englishSettings.styleId || '';
+        } else {
+          toggleSettingType('english', 'font');
+          englishFontFamily.value = preset.englishSettings.fontFamily || '';
+          updateFontWeights(englishFontFamily, englishFontWeight);
+          englishFontWeight.value = preset.englishSettings.fontWeight || '';
+
+          // 处理字体大小
+          const fontSize = preset.englishSettings.fontSize || 'keep';
+          const predefinedSizes = ['keep', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48', '64', '72'];
+
+          if (predefinedSizes.includes(fontSize)) {
+            englishFontSize.value = fontSize;
+            englishFontSizeCustom.style.display = 'none';
+            englishFontSize.style.display = 'block';
+          } else {
+            englishFontSize.value = 'custom';
+            englishFontSizeCustom.value = fontSize;
+            englishFontSizeCustom.style.display = 'block';
+            englishFontSize.style.display = 'none';
+          }
+        }
+      }
+
+      // 设置数字选项
+      if (preset.numberSettings) {
+        if (preset.numberSettings.type === 'textStyle') {
+          toggleSettingType('number', 'textStyle');
+          numberStyleSelect.value = preset.numberSettings.styleId || '';
+        } else {
+          toggleSettingType('number', 'font');
+          numberFontFamily.value = preset.numberSettings.fontFamily || '';
+          updateFontWeights(numberFontFamily, numberFontWeight);
+          numberFontWeight.value = preset.numberSettings.fontWeight || '';
+
+          // 处理字体大小
+          const fontSize = preset.numberSettings.fontSize || 'keep';
+          const predefinedSizes = ['keep', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48', '64', '72'];
+
+          if (predefinedSizes.includes(fontSize)) {
+            numberFontSize.value = fontSize;
+            numberFontSizeCustom.style.display = 'none';
+            numberFontSize.style.display = 'block';
+          } else {
+            numberFontSize.value = 'custom';
+            numberFontSizeCustom.value = fontSize;
+            numberFontSizeCustom.style.display = 'block';
+            numberFontSize.style.display = 'none';
+          }
+        }
+      }
+
+      updateButtonState();
+    }
+
+    // 監聽來自主程式的訊息
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+
+      if (msg.type === 'textStyles') {
+        textStyles = msg.styles;
+        populateTextStyles(textStyles);
+      }
+
+      else if (msg.type === 'availableFonts') {
+        fontFamilies = msg.fonts;
+        populateFontFamilies(fontFamilies);
+
+        // 修改這裡，不自動選擇第一個字型，保留提示選項
+        // 只有在用戶手動選擇了字型家族後，才更新字型粗細
+        updateButtonState();
+      }
+
+      else if (msg.type === 'presets') {
+        presets = msg.presets;
+        updatePresetsList();
+      }
+
+      else if (msg.type === 'selectionChange') {
+        hasTextNodeSelected = msg.hasTextNode;
+        updateButtonState();
+      }
+
+      else if (msg.type === 'loadedPreset') {
+        setPresetData(msg.preset);
+      }
+    };
+
+    // 事件綁定
+    // 應用按鈕
+    applyButton.onclick = applyStyles;
+    // 保存預設集按鈕
+    savePresetButton.onclick = savePreset;
+
+    // 類型切換按鈕
+    chineseTypeTextStyle.onclick = () => toggleSettingType('chinese', 'textStyle');
+    chineseTypeFont.onclick = () => toggleSettingType('chinese', 'font');
+    englishTypeTextStyle.onclick = () => toggleSettingType('english', 'textStyle');
+    englishTypeFont.onclick = () => toggleSettingType('english', 'font');
+    numberTypeTextStyle.onclick = () => toggleSettingType('number', 'textStyle');
+    numberTypeFont.onclick = () => toggleSettingType('number', 'font');
+
+    // 字型家族變更時，更新字型粗細選項
+    chineseFontFamily.onchange = () => {
+      updateFontWeights(chineseFontFamily, chineseFontWeight);
+      updateButtonState();
+    };
+    englishFontFamily.onchange = () => {
+      updateFontWeights(englishFontFamily, englishFontWeight);
+      updateButtonState();
+    };
+    numberFontFamily.onchange = () => {
+      updateFontWeights(numberFontFamily, numberFontWeight);
+      updateButtonState();
+    };
+
+    // 表單變更監聽
+    chineseStyleSelect.onchange = updateButtonState;
+    englishStyleSelect.onchange = updateButtonState;
+    numberStyleSelect.onchange = updateButtonState;
+    chineseFontWeight.onchange = updateButtonState;
+    englishFontWeight.onchange = updateButtonState;
+    numberFontWeight.onchange = updateButtonState;
+    presetNameInput.oninput = updateButtonState;
+
+    // 初始化
+    updateButtonState();
+
+    // 确保类型选择器按钮样式正确应用
+    function ensureTypeSelectors() {
+      // 中文部分
+      if (chineseSettingType === 'textStyle') {
+        chineseTypeTextStyle.classList.add('active');
+        chineseTypeFont.classList.remove('active');
+        chineseTextStyleSettings.style.display = 'block';
+        chineseFontSettings.style.display = 'none';
+      } else {
+        chineseTypeTextStyle.classList.remove('active');
+        chineseTypeFont.classList.add('active');
+        chineseTextStyleSettings.style.display = 'none';
+        chineseFontSettings.style.display = 'block';
+      }
+
+      // 英文部分
+      if (englishSettingType === 'textStyle') {
+        englishTypeTextStyle.classList.add('active');
+        englishTypeFont.classList.remove('active');
+        englishTextStyleSettings.style.display = 'block';
+        englishFontSettings.style.display = 'none';
+      } else {
+        englishTypeTextStyle.classList.remove('active');
+        englishTypeFont.classList.add('active');
+        englishTextStyleSettings.style.display = 'none';
+        englishFontSettings.style.display = 'block';
+      }
+
+      // 数字部分
+      if (numberSettingType === 'textStyle') {
+        numberTypeTextStyle.classList.add('active');
+        numberTypeFont.classList.remove('active');
+        numberTextStyleSettings.style.display = 'block';
+        numberFontSettings.style.display = 'none';
+      } else {
+        numberTypeTextStyle.classList.remove('active');
+        numberTypeFont.classList.add('active');
+        numberTextStyleSettings.style.display = 'none';
+        numberFontSettings.style.display = 'block';
+      }
+    }
+
+    // 初始化时确保按钮样式正确
+    ensureTypeSelectors();
+  </script>
+</body>
+
+</html>
