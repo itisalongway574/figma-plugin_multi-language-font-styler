@@ -47,6 +47,11 @@
       display: none;
     }
 
+    .form-row .label_same {
+      display: inline;
+      margin-right: 8px;
+    }
+
     select,
     input {
       flex: 1;
@@ -54,6 +59,11 @@
       border-radius: 4px;
       border: 1px solid #e5e5e5;
       width: 100%;
+    }
+
+    input[type="checkbox"] {
+      flex: 0;
+      width: auto;
     }
 
     button {
@@ -87,6 +97,10 @@
       margin: 0;
       margin-bottom: 12px;
       color: #aaa;
+    }
+
+    .label_same {
+      color: #666;
     }
 
     .preset-item {
@@ -242,7 +256,7 @@
 </head>
 
 <body>
-  <h1 class="plugin-name">dev複合字型轉換器</h1>
+  <h1 class="plugin-name">複合字型轉換器</h1>
   <h5 class="version">version: 20250407</h5>
 
   <div id="selectionStatus" class="status warn">
@@ -273,13 +287,13 @@
         </select>
       </div>
       <div class="form-row">
-        <label>字型粗細</label>
+        <label>字重</label>
         <select id="chineseFontWeight">
-          <option value="">選擇中文字型粗細</option>
+          <option value="">選擇中文字型字重</option>
         </select>
       </div>
       <div class="form-row">
-        <label>字型大小</label>
+        <label>字級大小</label>
         <div class="font-size-input-container">
           <select id="chineseFontSize" class="font-size-select">
             <option value="keep">維持原先字級</option>
@@ -326,13 +340,13 @@
         </select>
       </div>
       <div class="form-row">
-        <label>字型粗細</label>
+        <label>字重</label>
         <select id="englishFontWeight">
-          <option value="">選擇英文字型粗細</option>
+          <option value="">選擇英文字重</option>
         </select>
       </div>
       <div class="form-row">
-        <label>字型大小</label>
+        <label>字級大小</label>
         <div class="font-size-input-container">
           <select id="englishFontSize" class="font-size-select">
             <option value="keep">維持原先字級</option>
@@ -357,6 +371,10 @@
     </div>
 
     <h2>數字</h2>
+    <div class="form-row">
+      <input type="checkbox" id="numberSyncWithEnglish" onchange="toggleNumberSync()">
+      <label class="label_same">同英文字型</label>
+    </div>
     <div class="type-selector">
       <button id="numberTypeFont" class="active">Font</button>
       <button id="numberTypeTextStyle">Text Style</button>
@@ -379,13 +397,13 @@
         </select>
       </div>
       <div class="form-row">
-        <label>字型粗細</label>
+        <label>字重</label>
         <select id="numberFontWeight">
-          <option value="">選擇數字字型粗細</option>
+          <option value="">選擇數字字重</option>
         </select>
       </div>
       <div class="form-row">
-        <label>字型大小</label>
+        <label>字級大小</label>
         <div class="font-size-input-container">
           <select id="numberFontSize" class="font-size-select">
             <option value="keep">維持原先字級</option>
@@ -413,18 +431,18 @@
   </div>
 
   <div class="section">
-    <h2>預設集</h2>
+    <h2>預設組合</h2>
 
     <div class="form-row">
-      <label>預設集名稱</label>
-      <input id="presetName" type="text" placeholder="輸入預設集名稱 (保存當前設置)">
+      <label>預設組合名稱</label>
+      <input id="presetName" type="text" placeholder="輸入預設組合名稱">
     </div>
 
-    <button id="savePresetButton">保存為預設集</button>
+    <button id="savePresetButton">儲存為預設組合</button>
 
-    <h3>已保存預設集</h3>
+    <h3>已儲存預設組合</h3>
     <div id="presetsList">
-      <!-- 預設集列表將動態生成 -->
+      <!-- 預設組合列表將動態生成 -->
     </div>
   </div>
 
@@ -484,6 +502,79 @@
     let englishSettingType = 'font';
     let numberSettingType = 'font';
 
+    // 新增同步勾選功能
+    const numberSyncWithEnglish = document.getElementById('numberSyncWithEnglish');
+
+    // 切換數字同步功能
+    function toggleNumberSync() {
+      if (numberSyncWithEnglish.checked) {
+        // 禁用數字設置
+        numberTypeTextStyle.disabled = true;
+        numberTypeFont.disabled = true;
+        numberStyleSelect.disabled = true;
+        numberFontFamily.disabled = true;
+        numberFontWeight.disabled = true;
+        numberFontSize.disabled = true;
+        numberFontSizeCustom.disabled = true;
+
+        // 同步英文設置到數字
+        if (englishSettingType === 'textStyle') {
+          numberSettingType = 'textStyle';
+          numberStyleSelect.value = englishStyleSelect.value;
+        } else {
+          numberSettingType = 'font';
+          numberFontFamily.value = englishFontFamily.value;
+          numberFontWeight.value = englishFontWeight.value;
+          numberFontSize.value = englishFontSize.value;
+          numberFontSizeCustom.value = englishFontSizeCustom.value;
+        }
+
+        // 更新UI
+        ensureTypeSelectors();
+      } else {
+        // 啟用數字設置
+        numberTypeTextStyle.disabled = false;
+        numberTypeFont.disabled = false;
+        numberStyleSelect.disabled = false;
+        numberFontFamily.disabled = false;
+        numberFontWeight.disabled = false;
+        numberFontSize.disabled = false;
+        numberFontSizeCustom.disabled = false;
+      }
+
+      updateButtonState();
+    }
+
+    // 監聽英文設置變更
+    englishStyleSelect.onchange = () => {
+      if (numberSyncWithEnglish.checked) {
+        numberStyleSelect.value = englishStyleSelect.value;
+      }
+      updateButtonState();
+    };
+
+    englishFontFamily.onchange = () => {
+      if (numberSyncWithEnglish.checked) {
+        numberFontFamily.value = englishFontFamily.value;
+        updateFontWeights(numberFontFamily, numberFontWeight);
+      }
+      updateButtonState();
+    };
+
+    englishFontWeight.onchange = () => {
+      if (numberSyncWithEnglish.checked) {
+        numberFontWeight.value = englishFontWeight.value;
+      }
+      updateButtonState();
+    };
+
+    englishFontSize.onchange = () => {
+      if (numberSyncWithEnglish.checked) {
+        numberFontSize.value = englishFontSize.value;
+      }
+      updateButtonState();
+    };
+
     // 填充 Text Styles 下拉菜單
     function populateTextStyles(styles) {
       const selectElements = [chineseStyleSelect, englishStyleSelect, numberStyleSelect];
@@ -513,7 +604,7 @@
       ];
 
       for (const { select, weightSelect, type } of selectElements) {
-        // 保存当前选中值
+        // 儲存当前选中值
         const currentValue = select.value;
 
         // 清空现有选项（保留第一个）
@@ -543,7 +634,7 @@
       updateButtonState();
     }
 
-    // 更新字型粗細選項
+    // 更新字重選項
     function updateFontWeights(familySelect, weightSelect) {
       const family = familySelect.value;
 
@@ -569,12 +660,12 @@
       }
     }
 
-    // 更新預設集列表
+    // 更新預設組合列表
     function updatePresetsList() {
       presetsList.innerHTML = '';
 
       if (presets.length === 0) {
-        presetsList.innerHTML = '<p style="color: #666; text-align: center; padding: 10px;">尚無保存的預設集</p>';
+        presetsList.innerHTML = '<p style="color: #666; text-align: center; padding: 10px;">尚無儲存的預設組合</p>';
         return;
       }
 
@@ -592,7 +683,8 @@
         const loadButton = document.createElement('button');
         loadButton.textContent = '套用';
         loadButton.className = 'secondary';
-        loadButton.onclick = () => loadPreset(preset.id);
+        loadButton.disabled = !hasTextNodeSelected;
+        loadButton.onclick = () => applyPreset(preset.id);
 
         const deleteButton = document.createElement('button');
         deleteButton.textContent = '刪除';
@@ -688,10 +780,16 @@
       }
 
       // 檢查數字設置
-      if (numberSettingType === 'textStyle' && numberStyleSelect.value) {
-        numberSettingValid = true;
-      } else if (numberSettingType === 'font' && numberFontFamily.value && numberFontWeight.value) {
-        numberSettingValid = true;
+      if (numberSyncWithEnglish.checked) {
+        // 如果勾選了同步，則數字設置的有效性取決於英文設置
+        numberSettingValid = englishSettingValid;
+      } else {
+        // 如果沒有勾選同步，則檢查數字設置
+        if (numberSettingType === 'textStyle' && numberStyleSelect.value) {
+          numberSettingValid = true;
+        } else if (numberSettingType === 'font' && numberFontFamily.value && numberFontWeight.value) {
+          numberSettingValid = true;
+        }
       }
 
       // 至少有一個語系設置有效，且選中了文字圖層
@@ -707,7 +805,7 @@
         selectionStatus.classList.add('warn');
       }
 
-      // 保存預設集按鈕：需要有名稱且至少一個語系設置有效
+      // 儲存預設組合按鈕：需要有名稱且至少一個語系設置有效
       savePresetButton.disabled = !presetNameInput.value.trim() || !hasAnyValidSetting;
     }
 
@@ -735,12 +833,18 @@
 
       // 數字設置
       let numberSettings = { type: numberSettingType };
-      if (numberSettingType === 'textStyle') {
-        numberSettings.styleId = numberStyleSelect.value;
+      if (numberSyncWithEnglish.checked) {
+        // 如果勾選了同步，則使用英文設置
+        numberSettings = { ...englishSettings };
       } else {
-        numberSettings.fontFamily = numberFontFamily.value;
-        numberSettings.fontWeight = numberFontWeight.value;
-        numberSettings.fontSize = getFontSizeValue(numberFontSize, numberFontSizeCustom);
+        // 如果沒有勾選同步，則使用數字設置
+        if (numberSettingType === 'textStyle') {
+          numberSettings.styleId = numberStyleSelect.value;
+        } else {
+          numberSettings.fontFamily = numberFontFamily.value;
+          numberSettings.fontWeight = numberFontWeight.value;
+          numberSettings.fontSize = getFontSizeValue(numberFontSize, numberFontSizeCustom);
+        }
       }
 
       return {
@@ -764,12 +868,12 @@
       }, '*');
     }
 
-    // 保存預設集
+    // 儲存預設組合
     function savePreset() {
       const name = presetNameInput.value.trim();
 
       if (!name) {
-        alert('請輸入預設集名稱');
+        alert('請輸入預設組合名稱');
         return;
       }
 
@@ -789,7 +893,7 @@
       presetNameInput.value = '';
     }
 
-    // 載入預設集
+    // 載入預設組合
     function loadPreset(presetId) {
       parent.postMessage({
         pluginMessage: {
@@ -799,9 +903,30 @@
       }, '*');
     }
 
-    // 刪除預設集
+    // 直接套用預設組合
+    function applyPreset(presetId) {
+      // 如果沒有選中文字圖層則不執行
+      if (!hasTextNodeSelected) {
+        return;
+      }
+
+      // 首先加載預設組合到介面
+      parent.postMessage({
+        pluginMessage: {
+          type: 'loadPreset',
+          presetId: presetId
+        }
+      }, '*');
+
+      // 接著直接應用樣式
+      setTimeout(() => {
+        applyStyles();
+      }, 100);
+    }
+
+    // 刪除預設組合
     function deletePreset(presetId) {
-      if (confirm('確定要刪除這個預設集嗎？')) {
+      if (confirm('確定要刪除這個預設組合嗎？')) {
         parent.postMessage({
           pluginMessage: {
             type: 'deletePreset',
@@ -926,12 +1051,18 @@
 
       // 数字设置
       let numberSettings = { type: numberSettingType };
-      if (numberSettingType === 'textStyle') {
-        numberSettings.styleId = numberStyleSelect.value;
+      if (numberSyncWithEnglish.checked) {
+        // 如果勾選了同步，則使用英文設置
+        numberSettings = { ...englishSettings };
       } else {
-        numberSettings.fontFamily = numberFontFamily.value;
-        numberSettings.fontWeight = numberFontWeight.value;
-        numberSettings.fontSize = getFontSizeValue(numberFontSize, numberFontSizeCustom);
+        // 如果沒有勾選同步，則使用數字設置
+        if (numberSettingType === 'textStyle') {
+          numberSettings.styleId = numberStyleSelect.value;
+        } else {
+          numberSettings.fontFamily = numberFontFamily.value;
+          numberSettings.fontWeight = numberFontWeight.value;
+          numberSettings.fontSize = getFontSizeValue(numberFontSize, numberFontSizeCustom);
+        }
       }
 
       return {
@@ -1060,7 +1191,7 @@
         populateFontFamilies(fontFamilies);
 
         // 修改這裡，不自動選擇第一個字型，保留提示選項
-        // 只有在用戶手動選擇了字型家族後，才更新字型粗細
+        // 只有在用戶手動選擇了字型家族後，才更新字重
         updateButtonState();
       }
 
@@ -1072,6 +1203,7 @@
       else if (msg.type === 'selectionChange') {
         hasTextNodeSelected = msg.hasTextNode;
         updateButtonState();
+        updatePresetsList(); // 更新預設組合按鈕狀態
       }
 
       else if (msg.type === 'loadedPreset') {
@@ -1082,7 +1214,7 @@
     // 事件綁定
     // 應用按鈕
     applyButton.onclick = applyStyles;
-    // 保存預設集按鈕
+    // 儲存預設組合按鈕
     savePresetButton.onclick = savePreset;
 
     // 類型切換按鈕
@@ -1093,7 +1225,7 @@
     numberTypeTextStyle.onclick = () => toggleSettingType('number', 'textStyle');
     numberTypeFont.onclick = () => toggleSettingType('number', 'font');
 
-    // 字型家族變更時，更新字型粗細選項
+    // 字型家族變更時，更新字重選項
     chineseFontFamily.onchange = () => {
       updateFontWeights(chineseFontFamily, chineseFontWeight);
       updateButtonState();
