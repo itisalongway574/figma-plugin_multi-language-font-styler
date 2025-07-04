@@ -768,14 +768,14 @@
       // 檢查中文設置
       if (chineseSettingType === 'textStyle' && chineseStyleSelect.value) {
         chineseSettingValid = true;
-      } else if (chineseSettingType === 'font' && chineseFontFamily.value && chineseFontWeight.value) {
+      } else if (chineseSettingType === 'font' && chineseFontFamily.value) {
         chineseSettingValid = true;
       }
 
       // 檢查英文設置
       if (englishSettingType === 'textStyle' && englishStyleSelect.value) {
         englishSettingValid = true;
-      } else if (englishSettingType === 'font' && englishFontFamily.value && englishFontWeight.value) {
+      } else if (englishSettingType === 'font' && englishFontFamily.value) {
         englishSettingValid = true;
       }
 
@@ -787,7 +787,7 @@
         // 如果沒有勾選同步，則檢查數字設置
         if (numberSettingType === 'textStyle' && numberStyleSelect.value) {
           numberSettingValid = true;
-        } else if (numberSettingType === 'font' && numberFontFamily.value && numberFontWeight.value) {
+        } else if (numberSettingType === 'font' && numberFontFamily.value) {
           numberSettingValid = true;
         }
       }

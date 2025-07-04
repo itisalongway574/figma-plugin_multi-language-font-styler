@@ -5,6 +5,7 @@ figma.showUI(__html__, { width: 280, height: 560 });
 let textStyles: any[] = [];
 let presets: any[] = [];
 let availableFonts: any[] = [];
+let fontFamiliesData: { [key: string]: string[] } = {};
 
 // 載入已有的 Text Styles
 async function loadTextStyles() {
@@ -35,6 +36,9 @@ async function loadAvailableFonts() {
         }
         fontFamilies[font.family].push(font.style);
     }
+    
+    // 儲存字體家族數據供後續使用
+    fontFamiliesData = fontFamilies;
 
     figma.ui.postMessage({
         type: 'availableFonts',
@@ -177,6 +181,81 @@ async function loadExistingFontsInNode(node: TextNode): Promise<void> {
     await Promise.all(loadPromises);
 }
 
+// 自動選擇最接近的字重
+function getClosestFontWeight(targetFamily: string, availableFonts: { [key: string]: string[] }, originalWeight?: string): string | null {
+    if (!availableFonts[targetFamily]) {
+        return null;
+    }
+    
+    const weights = availableFonts[targetFamily];
+    
+    // 如果提供了原始字重，並且目標字體家族有相同的字重，優先使用
+    if (originalWeight && weights.indexOf(originalWeight) !== -1) {
+        console.log(`保持原始字重: ${originalWeight}`);
+        return originalWeight;
+    }
+    
+    // 如果原始字重不存在，嘗試找到相似的字重
+    if (originalWeight) {
+        const similarWeights = findSimilarWeights(originalWeight, weights);
+        if (similarWeights.length > 0) {
+            console.log(`找到相似字重: ${similarWeights[0]} (原始: ${originalWeight})`);
+            return similarWeights[0];
+        }
+    }
+    
+    // 最後使用預設優先順序
+    const weightPriority = [
+        'Regular', 'Medium', 'SemiBold', 'Semi Bold', 'Semibold',
+        'Bold', 'Light', 'Black', 'Thin', 'ExtraLight', 'ExtraBold',
+        'Heavy', 'UltraLight', 'UltraBold'
+    ];
+    
+    for (const preferredWeight of weightPriority) {
+        if (weights.indexOf(preferredWeight) !== -1) {
+            return preferredWeight;
+        }
+    }
+    
+    // 如果沒有找到標準字重，返回第一個可用的字重
+    return weights[0] || null;
+}
+
+// 尋找相似字重
+function findSimilarWeights(originalWeight: string, availableWeights: string[]): string[] {
+    // 字重分組：相似的字重會優先互相替代
+    const weightGroups: { [key: string]: string[] } = {
+        thin: ['Thin', 'UltraLight', 'ExtraLight'],
+        light: ['Light', 'ExtraLight'],
+        regular: ['Regular', 'Normal', 'Book'],
+        medium: ['Medium', 'SemiBold', 'Semi Bold', 'Semibold'],
+        bold: ['Bold', 'SemiBold', 'Semi Bold', 'Semibold'],
+        heavy: ['Black', 'Heavy', 'ExtraBold', 'UltraBold', 'Bold']
+    };
+    
+    // 找到原始字重所屬的組
+    let targetGroup: string[] | null = null;
+    for (const groupName in weightGroups) {
+        const groupWeights = weightGroups[groupName];
+        if (groupWeights.indexOf(originalWeight) !== -1) {
+            targetGroup = groupWeights;
+            break;
+        }
+    }
+    
+    if (!targetGroup) return [];
+    
+    // 在可用字重中尋找同組的字重
+    const similarWeights: string[] = [];
+    for (const weight of targetGroup) {
+        if (availableWeights.indexOf(weight) !== -1) {
+            similarWeights.push(weight);
+        }
+    }
+    
+    return similarWeights;
+}
+
 // 初始化
 loadTextStyles();
 loadAvailableFonts();
@@ -225,8 +304,27 @@ figma.ui.onmessage = async (msg) => {
                 
                 // 收集所有需要載入的字體
                 for (const segment of segments) {
-                    if (segment.settings && segment.settings.type === 'font' && segment.settings.fontFamily && segment.settings.fontWeight) {
-                        fontsToLoad.add(`${segment.settings.fontFamily}|${segment.settings.fontWeight}`);
+                    if (segment.settings && segment.settings.type === 'font' && segment.settings.fontFamily) {
+                        // 自動選擇字重（如果未指定）
+                        let fontWeight = segment.settings.fontWeight;
+                        if (!fontWeight) {
+                            // 獲取該段落中第一個字符的原始字重
+                            let originalWeight: string | null = null;
+                            try {
+                                const firstCharFont = node.getRangeFontName(segment.start, segment.start + 1);
+                                if (typeof firstCharFont === 'object' && firstCharFont.style) {
+                                    originalWeight = firstCharFont.style;
+                                }
+                            } catch (error) {
+                                // 忽略錯誤
+                            }
+                            
+                            fontWeight = getClosestFontWeight(segment.settings.fontFamily, fontFamiliesData, originalWeight || undefined);
+                        }
+                        
+                        if (fontWeight) {
+                            fontsToLoad.add(`${segment.settings.fontFamily}|${fontWeight}`);
+                        }
                     }
                 }
                 
@@ -253,22 +351,43 @@ figma.ui.onmessage = async (msg) => {
                                 console.log(`套用文字樣式: ${segment.settings.styleId}`);
                                 node.setRangeTextStyleId(segment.start, segment.end, segment.settings.styleId);
                             }
-                            else if (segment.settings.type === 'font' && segment.settings.fontFamily && segment.settings.fontWeight) {
-                                console.log(`套用字體: ${segment.settings.fontFamily} ${segment.settings.fontWeight}`);
-                                
-                                // 設置字體
-                                node.setRangeFontName(segment.start, segment.end, {
-                                    family: segment.settings.fontFamily,
-                                    style: segment.settings.fontWeight
-                                });
-
-                                // 設置字體大小
-                                if (segment.settings.fontSize && segment.settings.fontSize !== 'keep') {
-                                    const fontSize = parseInt(segment.settings.fontSize);
-                                    if (!isNaN(fontSize)) {
-                                        console.log(`套用字體大小: ${fontSize}`);
-                                        node.setRangeFontSize(segment.start, segment.end, fontSize);
+                            else if (segment.settings.type === 'font' && segment.settings.fontFamily) {
+                                // 自動選擇字重（如果未指定）
+                                let fontWeight = segment.settings.fontWeight;
+                                if (!fontWeight) {
+                                    // 獲取該段落中第一個字符的原始字重
+                                    let originalWeight: string | null = null;
+                                    try {
+                                        const firstCharFont = node.getRangeFontName(segment.start, segment.start + 1);
+                                        if (typeof firstCharFont === 'object' && firstCharFont.style) {
+                                            originalWeight = firstCharFont.style;
+                                        }
+                                    } catch (error) {
+                                        // 忽略錯誤
                                     }
+                                    
+                                    fontWeight = getClosestFontWeight(segment.settings.fontFamily, fontFamiliesData, originalWeight || undefined);
+                                    console.log(`自動選擇字重: ${fontWeight} (原始: ${originalWeight})`);
+                                }
+                                
+                                if (fontWeight) {
+                                    console.log(`套用字體: ${segment.settings.fontFamily} ${fontWeight}`);
+                                    // 設置字體
+                                    node.setRangeFontName(segment.start, segment.end, {
+                                        family: segment.settings.fontFamily,
+                                        style: fontWeight
+                                    });
+
+                                    // 設置字體大小
+                                    if (segment.settings.fontSize && segment.settings.fontSize !== 'keep') {
+                                        const fontSize = parseInt(segment.settings.fontSize);
+                                        if (!isNaN(fontSize)) {
+                                            console.log(`套用字體大小: ${fontSize}`);
+                                            node.setRangeFontSize(segment.start, segment.end, fontSize);
+                                        }
+                                    }
+                                } else {
+                                    console.log(`無法找到字體家族的可用字重: ${segment.settings.fontFamily}`);
                                 }
                             }
                         } catch (error) {
