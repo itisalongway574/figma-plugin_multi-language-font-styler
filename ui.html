@@ -67,7 +67,7 @@
     }
 
     button {
-      background-color: #9E7A4E;
+      background-color: #b10000;
       color: white;
       border: none;
       border-radius: 6px;
@@ -256,11 +256,11 @@
 </head>
 
 <body>
-  <h1 class="plugin-name">複合字型轉換器</h1>
-  <h5 class="version">version: 20250407</h5>
+  <h1 class="plugin-name">DEV複合字型轉換器</h1>
+  <h5 class="version">version: 20250707</h5>
 
   <div id="selectionStatus" class="status warn">
-    請選擇一個文字圖層
+    請選擇包含文字的元素
   </div>
 
   <div class="section">
@@ -798,10 +798,10 @@
 
       // 更新選擇狀態提示
       if (hasTextNodeSelected) {
-        selectionStatus.textContent = '已選擇文字圖層';
+        selectionStatus.textContent = '已找到文字圖層';
         selectionStatus.classList.remove('warn');
       } else {
-        selectionStatus.textContent = '請選擇一個文字圖層';
+        selectionStatus.textContent = '請選擇包含文字的元素';
         selectionStatus.classList.add('warn');
       }
 

@@ -261,10 +261,33 @@ loadTextStyles();
 loadAvailableFonts();
 loadPresets();
 
+// 遞歸查找所有文字圖層的函式
+function findAllTextNodes(nodes: readonly SceneNode[]): TextNode[] {
+    const textNodes: TextNode[] = [];
+    
+    function traverse(node: SceneNode) {
+        if (node.type === 'TEXT') {
+            textNodes.push(node as TextNode);
+        } else if ('children' in node) {
+            // 如果節點有子節點，遞歸檢查每個子節點
+            for (const child of node.children) {
+                traverse(child);
+            }
+        }
+    }
+    
+    for (const node of nodes) {
+        traverse(node);
+    }
+    
+    return textNodes;
+}
+
 // 監聽選擇改變
 figma.on('selectionchange', () => {
     const selection = figma.currentPage.selection;
-    const hasTextNode = selection.some(node => node.type === 'TEXT');
+    const textNodes = findAllTextNodes(selection);
+    const hasTextNode = textNodes.length > 0;
 
     figma.ui.postMessage({
         type: 'selectionChange',
@@ -276,10 +299,10 @@ figma.on('selectionchange', () => {
 figma.ui.onmessage = async (msg) => {
     if (msg.type === 'applyStyles') {
         const selection = figma.currentPage.selection;
-        const textNodes = selection.filter(node => node.type === 'TEXT') as TextNode[];
+        const textNodes = findAllTextNodes(selection);
 
         if (textNodes.length === 0) {
-            figma.notify('請選擇至少一個文字圖層');
+            figma.notify('請選擇包含文字圖層的元素');
             return;
         }
 
