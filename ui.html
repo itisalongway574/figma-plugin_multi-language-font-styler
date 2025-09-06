@@ -151,6 +151,11 @@
       color: #d4380d;
     }
 
+    .status.info {
+      background-color: #e6f7ff;
+      color: #0958d9;
+    }
+
     .type-selector {
       display: flex;
       gap: 6px;
@@ -252,6 +257,7 @@
       width: 100%;
       display: none;
     }
+
   </style>
 </head>
 
@@ -261,6 +267,18 @@
 
   <div id="selectionStatus" class="status warn">
     請選擇包含文字的元素
+  </div>
+
+  <div class="section">
+    <h3>即時轉換</h3>
+    <div class="form-row">
+      <label class="label_same">
+        <input type="checkbox" id="realtimeToggle"> 啟用即時轉換
+      </label>
+    </div>
+    <div id="realtimeStatus" class="status info" style="display: none;">
+      即時轉換已啟用 - 輸入時自動套用字型設定
+    </div>
   </div>
 
   <div class="section">
@@ -809,50 +827,7 @@
       savePresetButton.disabled = !presetNameInput.value.trim() || !hasAnyValidSetting;
     }
 
-    // 獲取當前設置
-    function getCurrentSettings() {
-      // 中文設置
-      let chineseSettings = { type: chineseSettingType };
-      if (chineseSettingType === 'textStyle') {
-        chineseSettings.styleId = chineseStyleSelect.value;
-      } else {
-        chineseSettings.fontFamily = chineseFontFamily.value;
-        chineseSettings.fontWeight = chineseFontWeight.value;
-        chineseSettings.fontSize = getFontSizeValue(chineseFontSize, chineseFontSizeCustom);
-      }
-
-      // 英文設置
-      let englishSettings = { type: englishSettingType };
-      if (englishSettingType === 'textStyle') {
-        englishSettings.styleId = englishStyleSelect.value;
-      } else {
-        englishSettings.fontFamily = englishFontFamily.value;
-        englishSettings.fontWeight = englishFontWeight.value;
-        englishSettings.fontSize = getFontSizeValue(englishFontSize, englishFontSizeCustom);
-      }
-
-      // 數字設置
-      let numberSettings = { type: numberSettingType };
-      if (numberSyncWithEnglish.checked) {
-        // 如果勾選了同步，則使用英文設置
-        numberSettings = { ...englishSettings };
-      } else {
-        // 如果沒有勾選同步，則使用數字設置
-        if (numberSettingType === 'textStyle') {
-          numberSettings.styleId = numberStyleSelect.value;
-        } else {
-          numberSettings.fontFamily = numberFontFamily.value;
-          numberSettings.fontWeight = numberFontWeight.value;
-          numberSettings.fontSize = getFontSizeValue(numberFontSize, numberFontSizeCustom);
-        }
-      }
-
-      return {
-        chineseSettings,
-        englishSettings,
-        numberSettings
-      };
-    }
+    // getCurrentSettings 函數在後面定義，移除這個重複的版本
 
     // 應用字型樣式
     function applyStyles() {
@@ -1295,6 +1270,41 @@
 
     // 初始化时确保按钮样式正确
     ensureTypeSelectors();
+
+    // 即時轉換開關處理
+    const realtimeToggle = document.getElementById('realtimeToggle');
+    const realtimeStatus = document.getElementById('realtimeStatus');
+    
+    realtimeToggle.addEventListener('change', function() {
+      const isEnabled = this.checked;
+      
+      if (isEnabled) {
+        // 檢查是否設置了字型
+        const chineseSettings = getCurrentSettings().chineseSettings;
+        if (!chineseSettings || !chineseSettings.fontFamily) {
+          alert('請先設定中文字型後再啟用即時轉換');
+          this.checked = false;
+          return;
+        }
+        
+        realtimeStatus.style.display = 'block';
+        parent.postMessage({
+          pluginMessage: {
+            type: 'enableRealtime',
+            settings: getCurrentSettings()
+          }
+        }, '*');
+      } else {
+        realtimeStatus.style.display = 'none';
+        parent.postMessage({
+          pluginMessage: {
+            type: 'disableRealtime'
+          }
+        }, '*');
+      }
+    });
+
+    // 這個函數已經存在，不需要重複定義
   </script>
 </body>
 

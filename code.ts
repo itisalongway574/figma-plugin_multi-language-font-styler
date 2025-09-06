@@ -7,6 +7,234 @@ let presets: any[] = [];
 let availableFonts: any[] = [];
 let fontFamiliesData: { [key: string]: string[] } = {};
 
+// 即時轉換相關變量
+let isRealtimeEnabled = false;
+let isPluginModifying = false;
+let realtimeSettings = {
+    chineseSettings: null,
+    englishSettings: null,
+    numberSettings: null
+};
+let debounceTimeout: any = null;
+
+// 防抖函數
+function debounce(func: Function, delay: number) {
+    return (...args: any[]) => {
+        if (debounceTimeout) {
+            clearTimeout(debounceTimeout);
+        }
+        debounceTimeout = setTimeout(() => func.apply(null, args), delay);
+    };
+}
+
+// 即時轉換處理函數 - 直接使用現有的轉換邏輯
+async function triggerRealtimeConversion() {
+    if (!isRealtimeEnabled || isPluginModifying || !realtimeSettings.chineseSettings) {
+        return;
+    }
+
+    try {
+        isPluginModifying = true;
+        
+        const selection = figma.currentPage.selection;
+        const textNodes = findAllTextNodes(selection);
+
+        if (textNodes.length === 0) {
+            return;
+        }
+
+        // 直接使用現有的轉換邏輯（複製自 applyStyles 處理）
+        for (const node of textNodes) {
+            const characters = node.characters;
+            const segments = analyzeTextSegments(
+                characters, 
+                realtimeSettings.chineseSettings, 
+                realtimeSettings.englishSettings, 
+                realtimeSettings.numberSettings
+            );
+
+            // 載入字體和套用樣式（簡化版本，不輸出太多 console.log）
+            const fontsToLoad = new Set<string>();
+            
+            for (const segment of segments) {
+                if (segment.settings && segment.settings.type === 'font' && segment.settings.fontFamily) {
+                    let fontWeight = segment.settings.fontWeight;
+                    if (!fontWeight) {
+                        let originalWeight: string | null = null;
+                        try {
+                            const firstCharFont = node.getRangeFontName(segment.start, segment.start + 1);
+                            if (typeof firstCharFont === 'object' && firstCharFont.style) {
+                                originalWeight = firstCharFont.style;
+                            }
+                        } catch (error) {
+                            // 忽略錯誤
+                        }
+                        fontWeight = getClosestFontWeight(segment.settings.fontFamily, fontFamiliesData, originalWeight || undefined);
+                    }
+                    if (fontWeight) {
+                        fontsToLoad.add(`${segment.settings.fontFamily}|${fontWeight}`);
+                    }
+                }
+            }
+
+            // 載入字體
+            const fontLoadPromises = Array.from(fontsToLoad).map(fontKey => {
+                const [family, style] = fontKey.split('|');
+                return figma.loadFontAsync({ family, style }).catch(() => null);
+            });
+            await Promise.all(fontLoadPromises);
+
+            // 套用樣式
+            for (const segment of segments) {
+                if (segment.settings) {
+                    try {
+                        if (segment.settings.type === 'textStyle' && segment.settings.styleId) {
+                            node.setRangeTextStyleId(segment.start, segment.end, segment.settings.styleId);
+                        } else if (segment.settings.type === 'font' && segment.settings.fontFamily) {
+                            let fontWeight = segment.settings.fontWeight;
+                            if (!fontWeight) {
+                                let originalWeight: string | null = null;
+                                try {
+                                    const firstCharFont = node.getRangeFontName(segment.start, segment.start + 1);
+                                    if (typeof firstCharFont === 'object' && firstCharFont.style) {
+                                        originalWeight = firstCharFont.style;
+                                    }
+                                } catch (error) {
+                                    // 忽略錯誤
+                                }
+                                fontWeight = getClosestFontWeight(segment.settings.fontFamily, fontFamiliesData, originalWeight || undefined);
+                            }
+                            
+                            if (fontWeight) {
+                                node.setRangeFontName(segment.start, segment.end, {
+                                    family: segment.settings.fontFamily,
+                                    style: fontWeight
+                                });
+
+                                // 設置字體大小
+                                if (segment.settings.fontSize && segment.settings.fontSize !== 'keep') {
+                                    const fontSize = parseInt(segment.settings.fontSize);
+                                    if (!isNaN(fontSize)) {
+                                        node.setRangeFontSize(segment.start, segment.end, fontSize);
+                                    }
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('即時轉換段落處理錯誤:', error);
+                    }
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('即時轉換失敗:', error);
+    } finally {
+        isPluginModifying = false;
+    }
+}
+
+// 針對特定文字節點的即時轉換
+async function triggerRealtimeConversionForNode(textNode: TextNode) {
+    if (!isRealtimeEnabled || isPluginModifying || !realtimeSettings.chineseSettings) {
+        return;
+    }
+
+    try {
+        isPluginModifying = true;
+        
+        const characters = textNode.characters;
+        const segments = analyzeTextSegments(
+            characters, 
+            realtimeSettings.chineseSettings, 
+            realtimeSettings.englishSettings, 
+            realtimeSettings.numberSettings
+        );
+
+        // 載入字體
+        const fontsToLoad = new Set<string>();
+        
+        for (const segment of segments) {
+            if (segment.settings && segment.settings.type === 'font' && segment.settings.fontFamily) {
+                let fontWeight = segment.settings.fontWeight;
+                if (!fontWeight) {
+                    let originalWeight: string | null = null;
+                    try {
+                        const firstCharFont = textNode.getRangeFontName(segment.start, segment.start + 1);
+                        if (typeof firstCharFont === 'object' && firstCharFont.style) {
+                            originalWeight = firstCharFont.style;
+                        }
+                    } catch (error) {
+                        // 忽略錯誤
+                    }
+                    fontWeight = getClosestFontWeight(segment.settings.fontFamily, fontFamiliesData, originalWeight || undefined);
+                }
+                if (fontWeight) {
+                    fontsToLoad.add(`${segment.settings.fontFamily}|${fontWeight}`);
+                }
+            }
+        }
+
+        // 載入字體
+        const fontLoadPromises = Array.from(fontsToLoad).map(fontKey => {
+            const [family, style] = fontKey.split('|');
+            return figma.loadFontAsync({ family, style }).catch(() => null);
+        });
+        await Promise.all(fontLoadPromises);
+
+        // 套用樣式
+        for (const segment of segments) {
+            if (segment.settings) {
+                try {
+                    if (segment.settings.type === 'textStyle' && segment.settings.styleId) {
+                        textNode.setRangeTextStyleId(segment.start, segment.end, segment.settings.styleId);
+                    } else if (segment.settings.type === 'font' && segment.settings.fontFamily) {
+                        let fontWeight = segment.settings.fontWeight;
+                        if (!fontWeight) {
+                            let originalWeight: string | null = null;
+                            try {
+                                const firstCharFont = textNode.getRangeFontName(segment.start, segment.start + 1);
+                                if (typeof firstCharFont === 'object' && firstCharFont.style) {
+                                    originalWeight = firstCharFont.style;
+                                }
+                            } catch (error) {
+                                // 忽略錯誤
+                            }
+                            fontWeight = getClosestFontWeight(segment.settings.fontFamily, fontFamiliesData, originalWeight || undefined);
+                        }
+                        
+                        if (fontWeight) {
+                            textNode.setRangeFontName(segment.start, segment.end, {
+                                family: segment.settings.fontFamily,
+                                style: fontWeight
+                            });
+
+                            // 設置字體大小
+                            if (segment.settings.fontSize && segment.settings.fontSize !== 'keep') {
+                                const fontSize = parseInt(segment.settings.fontSize);
+                                if (!isNaN(fontSize)) {
+                                    textNode.setRangeFontSize(segment.start, segment.end, fontSize);
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('即時轉換段落處理錯誤:', error);
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('即時轉換失敗:', error);
+    } finally {
+        isPluginModifying = false;
+    }
+}
+
+// 建立防抖版本的即時轉換函數
+const debouncedRealtimeConversion = debounce(triggerRealtimeConversion, 400);
+const debouncedRealtimeConversionForNode = debounce(triggerRealtimeConversionForNode, 400);
+
 // 載入已有的 Text Styles
 async function loadTextStyles() {
     const styles = figma.getLocalTextStyles();
@@ -261,6 +489,9 @@ loadTextStyles();
 loadAvailableFonts();
 loadPresets();
 
+// 啟用所有頁面的 documentchange 事件
+figma.loadAllPagesAsync();
+
 // 遞歸查找所有文字圖層的函式
 function findAllTextNodes(nodes: readonly SceneNode[]): TextNode[] {
     const textNodes: TextNode[] = [];
@@ -293,6 +524,28 @@ figma.on('selectionchange', () => {
         type: 'selectionChange',
         hasTextNode: hasTextNode
     });
+});
+
+// 監聽文檔變化以實現即時轉換
+figma.on('documentchange', (event) => {
+    // 如果即時轉換未啟用，或者是插件自己做的修改，就跳過
+    if (!isRealtimeEnabled || isPluginModifying) {
+        return;
+    }
+
+    // 檢查變化是否為文字相關
+    for (const change of event.documentChanges) {
+        if (change.type === 'PROPERTY_CHANGE') {
+            const node = figma.getNodeById(change.id);
+            
+            // 檢查是否為文字節點且字符內容有變化
+            if (node && node.type === 'TEXT' && change.properties.indexOf('characters') !== -1) {
+                console.log('檢測到文字變化:', node.id);
+                // 直接對這個文字節點進行轉換
+                debouncedRealtimeConversionForNode(node as TextNode);
+            }
+        }
+    }
 });
 
 // 處理來自 UI 的訊息
@@ -468,5 +721,25 @@ figma.ui.onmessage = async (msg) => {
                 preset: preset
             });
         }
+    }
+
+    else if (msg.type === 'enableRealtime') {
+        isRealtimeEnabled = true;
+        realtimeSettings.chineseSettings = msg.settings.chineseSettings;
+        realtimeSettings.englishSettings = msg.settings.englishSettings;
+        realtimeSettings.numberSettings = msg.settings.numberSettings;
+        
+        console.log('即時轉換已啟用');
+        figma.notify('即時轉換已啟用');
+    }
+
+    else if (msg.type === 'disableRealtime') {
+        isRealtimeEnabled = false;
+        realtimeSettings.chineseSettings = null;
+        realtimeSettings.englishSettings = null;
+        realtimeSettings.numberSettings = null;
+        
+        console.log('即時轉換已關閉');
+        figma.notify('即時轉換已關閉');
     }
 };
