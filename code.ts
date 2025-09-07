@@ -172,8 +172,36 @@ async function loadAvailableFonts() {
 
 // 載入已保存的預設集
 async function loadPresets() {
+    // 內建預設組合 - 不可刪除且永遠排第一個
+    const builtinPreset = {
+        id: 'builtin-noto-roboto',
+        name: '思源宋+Roboto Slab',
+        isBuiltin: true, // 標記為內建組合
+        chineseSettings: {
+            type: 'font',
+            fontFamily: 'Noto Serif TC',
+            fontWeight: '', // 維持原本字重
+            fontSize: 'keep' // 維持原本字型大小
+        },
+        englishSettings: {
+            type: 'font', 
+            fontFamily: 'Roboto Slab',
+            fontWeight: '', // 維持原本字重
+            fontSize: 'keep' // 維持原本字型大小
+        },
+        numberSettings: {
+            type: 'font',
+            fontFamily: 'Roboto Slab', // 同英文字型
+            fontWeight: '', // 維持原本字重
+            fontSize: 'keep' // 維持原本字型大小
+        }
+    };
+    
     const savedPresets = await figma.clientStorage.getAsync('languagePresets') || [];
-    presets = savedPresets;
+    
+    // 將內建組合放在第一個，後面接使用者儲存的組合
+    presets = [builtinPreset, ...savedPresets];
+    
     figma.ui.postMessage({
         type: 'presets',
         presets: presets
@@ -593,7 +621,10 @@ figma.ui.onmessage = async (msg) => {
         };
 
         presets.push(newPreset);
-        await figma.clientStorage.setAsync('languagePresets', presets);
+        
+        // 只儲存使用者建立的組合 (排除內建組合)
+        const userPresets = presets.filter(preset => !preset.isBuiltin);
+        await figma.clientStorage.setAsync('languagePresets', userPresets);
 
         figma.ui.postMessage({
             type: 'presets',
@@ -604,9 +635,20 @@ figma.ui.onmessage = async (msg) => {
     }
 
     else if (msg.type === 'deletePreset') {
+        // 檢查是否為內建組合
+        const presetToDelete = presets.find(p => p.id === msg.presetId);
+        if (presetToDelete && presetToDelete.isBuiltin) {
+            figma.notify('無法刪除內建預設組合');
+            return;
+        }
+        
+        // 從記憶體中移除
         const filteredPresets = presets.filter(preset => preset.id !== msg.presetId);
         presets = filteredPresets;
-        await figma.clientStorage.setAsync('languagePresets', presets);
+        
+        // 只儲存使用者建立的組合 (排除內建組合)
+        const userPresets = presets.filter(preset => !preset.isBuiltin);
+        await figma.clientStorage.setAsync('languagePresets', userPresets);
 
         figma.ui.postMessage({
             type: 'presets',

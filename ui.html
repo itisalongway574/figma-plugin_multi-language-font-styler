@@ -173,9 +173,9 @@
     }
 
     .type-selector button.active {
-      background-color: #9E7A4E;
+      background-color: #555;
       color: white;
-      border-color: #9E7A4E;
+      border-color: #555;
     }
 
     .nested-form {
@@ -214,6 +214,11 @@
 
     #applyButton {
       margin-top: 16px;
+      background-color: #7A522C;
+    }
+    
+    #applyButton:disabled {
+      background-color: #cccccc;
     }
 
     #chineseTextStyleSettings,
@@ -710,15 +715,18 @@
         loadButton.disabled = !hasTextNodeSelected;
         loadButton.onclick = () => applyPreset(preset.id);
 
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = '刪除';
-        deleteButton.className = 'secondary';
-        deleteButton.style.backgroundColor = '#fff0f0';
-        deleteButton.style.color = '#d4380d';
-        deleteButton.onclick = () => deletePreset(preset.id);
-
         presetControls.appendChild(loadButton);
-        presetControls.appendChild(deleteButton);
+
+        // 只有非內建組合才顯示刪除按鈕
+        if (!preset.isBuiltin) {
+          const deleteButton = document.createElement('button');
+          deleteButton.textContent = '刪除';
+          deleteButton.className = 'secondary';
+          deleteButton.style.backgroundColor = '#fff0f0';
+          deleteButton.style.color = '#d4380d';
+          deleteButton.onclick = () => deletePreset(preset.id);
+          presetControls.appendChild(deleteButton);
+        }
 
         presetItem.appendChild(presetName);
         presetItem.appendChild(presetControls);
