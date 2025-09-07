@@ -258,6 +258,67 @@
       display: none;
     }
 
+    /* 即時轉換 switch 樣式 */
+    .realtime-toggle-container {
+      margin-bottom: 20px;
+      background: #f8f8f8;
+      border-radius: 8px;
+      padding: 4px 12px;
+    }
+
+    .realtime-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .realtime-status {
+      font-size: 14px;
+      font-weight: 500;
+      color: #999;
+    }
+
+    .realtime-status.enabled {
+      color: #9E7A4E;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 20px;
+      background: #ddd;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .toggle-switch.active {
+      background: #9E7A4E;
+    }
+
+    .toggle-input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-slider.active {
+      transform: translateX(20px);
+    }
   </style>
 </head>
 
@@ -269,15 +330,13 @@
     請選擇包含文字的元素
   </div>
 
-  <div class="section">
-    <h3>即時轉換</h3>
-    <div class="form-row">
-      <label class="label_same">
-        <input type="checkbox" id="realtimeToggle"> 啟用即時轉換
-      </label>
-    </div>
-    <div id="realtimeStatus" class="status info" style="display: none;">
-      即時轉換已啟用 - 輸入時自動套用字型設定
+  <div class="realtime-toggle-container">
+    <div class="realtime-row">
+      <div class="realtime-status" id="realtimeStatusText">未啟用即時轉換</div>
+      <div class="toggle-switch" id="toggleSwitch">
+        <input type="checkbox" id="realtimeToggle" class="toggle-input">
+        <span class="toggle-slider"></span>
+      </div>
     </div>
   </div>
 
@@ -1273,21 +1332,49 @@
 
     // 即時轉換開關處理
     const realtimeToggle = document.getElementById('realtimeToggle');
-    const realtimeStatus = document.getElementById('realtimeStatus');
-    
-    realtimeToggle.addEventListener('change', function() {
+    const toggleSwitch = document.getElementById('toggleSwitch');
+    const realtimeStatusText = document.getElementById('realtimeStatusText');
+
+    // 更新 switch 視覺狀態
+    function updateSwitchState(isEnabled) {
+      const toggleSlider = toggleSwitch.querySelector('.toggle-slider');
+
+      if (isEnabled) {
+        toggleSwitch.classList.add('active');
+        toggleSlider.classList.add('active');
+        realtimeStatusText.textContent = '啟用即時轉換';
+        realtimeStatusText.classList.add('enabled');
+      } else {
+        toggleSwitch.classList.remove('active');
+        toggleSlider.classList.remove('active');
+        realtimeStatusText.textContent = '未啟用即時轉換';
+        realtimeStatusText.classList.remove('enabled');
+      }
+    }
+
+    // 點擊 switch 區域觸發切換
+    toggleSwitch.addEventListener('click', function () {
+      realtimeToggle.checked = !realtimeToggle.checked;
+
+      // 手動觸發 change 事件
+      const changeEvent = new Event('change', { bubbles: true });
+      realtimeToggle.dispatchEvent(changeEvent);
+    });
+
+    realtimeToggle.addEventListener('change', function () {
       const isEnabled = this.checked;
-      
+
       if (isEnabled) {
         // 檢查是否設置了字型
         const chineseSettings = getCurrentSettings().chineseSettings;
         if (!chineseSettings || !chineseSettings.fontFamily) {
           alert('請先設定中文字型後再啟用即時轉換');
           this.checked = false;
+          updateSwitchState(false);  // 確保視覺狀態同步
           return;
         }
-        
-        realtimeStatus.style.display = 'block';
+
+        updateSwitchState(true);
         parent.postMessage({
           pluginMessage: {
             type: 'enableRealtime',
@@ -1295,7 +1382,7 @@
           }
         }, '*');
       } else {
-        realtimeStatus.style.display = 'none';
+        updateSwitchState(false);
         parent.postMessage({
           pluginMessage: {
             type: 'disableRealtime'
