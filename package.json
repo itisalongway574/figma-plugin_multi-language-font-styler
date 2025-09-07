@@ -8,7 +8,9 @@
     "lint": "eslint --ext .ts,.tsx --ignore-pattern node_modules .",
     "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix .",
     "watch": "npm run build -- --watch",
-    "update-version": "node -e \"const fs=require('fs'); const date=new Date().toISOString().slice(0,10).replace(/-/g,''); const content=fs.readFileSync('ui.html','utf8'); const updated=content.replace(/version: \\d{8}/,'version: '+date); fs.writeFileSync('ui.html',updated);\""
+    "update-version": "node -e \"const fs=require('fs'); const date=new Date().toISOString().slice(0,10).replace(/-/g,''); const content=fs.readFileSync('ui.html','utf8'); const updated=content.replace(/version: \\d{8}/,'version: '+date); fs.writeFileSync('ui.html',updated);\"",
+    "release": "npm run build && npm run update-version",
+    "package": "npm run release && mkdir -p release && cp manifest.json ui.html code.js release/ && echo 'Release files ready in ./release/ folder'"
   },
   "author": "",
   "license": "",

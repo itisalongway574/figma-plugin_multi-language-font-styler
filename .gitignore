@@ -3,6 +3,10 @@
 *.log.*
 node_modules
 
+# Build outputs
 out/
 dist/
 code.js
+
+# Release folder
+release/
