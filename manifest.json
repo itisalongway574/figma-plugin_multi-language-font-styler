@@ -1,5 +1,5 @@
 {
-  "name": "複合字型轉換器",
+  "name": "DEV版本-複合字型轉換器",
   "id": "multi-language-font-styler",
   "api": "1.0.0",
   "main": "code.js",
@@ -9,7 +9,7 @@
   ],
   "menu": [
     {
-      "name": "複合字型轉換器",
+      "name": "DEV版本-複合字型轉換器",
       "command": "open-plugin"
     }
   ],
