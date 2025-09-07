@@ -7,14 +7,9 @@ let presets: any[] = [];
 let availableFonts: any[] = [];
 let fontFamiliesData: { [key: string]: string[] } = {};
 
-// 即時轉換相關變量
-let isRealtimeEnabled = false;
+// 即時轉換相關變量 (總是啟用)
 let isPluginModifying = false;
-const realtimeSettings = {
-    chineseSettings: null,
-    englishSettings: null,
-    numberSettings: null
-};
+let lastAppliedSettings: any = null;
 let debounceTimeout: any = null;
 
 // 防抖函數
@@ -28,24 +23,32 @@ function debounce(func: Function, delay: number) {
 }
 
 
-// 針對特定文字節點的即時轉換
+// 針對特定文字節點的即時轉換 - 使用最後套用的設定
 async function triggerRealtimeConversionForNode(textNode: TextNode) {
-    if (!isRealtimeEnabled || isPluginModifying) {
+    if (isPluginModifying) {
+        return;
+    }
+
+    // 如果沒有任何設定，就不進行轉換
+    if (!lastAppliedSettings) {
         return;
     }
 
     try {
         isPluginModifying = true;
         
+        // 使用最後套用的設定
+        const chineseSettings = lastAppliedSettings.chineseSettings;
+        const englishSettings = lastAppliedSettings.englishSettings;
+        const numberSettings = lastAppliedSettings.numberSettings;
+        
+        // 首先載入節點中所有現有的字體
+        await loadExistingFontsInNode(textNode);
+        
         const characters = textNode.characters;
-        const segments = analyzeTextSegments(
-            characters, 
-            realtimeSettings.chineseSettings, 
-            realtimeSettings.englishSettings, 
-            realtimeSettings.numberSettings
-        );
+        const segments = analyzeTextSegments(characters, chineseSettings, englishSettings, numberSettings);
 
-        // 載入字體
+        // 載入所需字體
         const fontsToLoad = new Set<string>();
         
         for (const segment of segments) {
@@ -419,10 +422,10 @@ figma.on('selectionchange', () => {
     });
 });
 
-// 監聽文檔變化以實現即時轉換
+// 監聽文檔變化以實現即時轉換 (總是啟用)
 figma.on('documentchange', async (event) => {
-    // 如果即時轉換未啟用，或者是插件自己做的修改，就跳過
-    if (!isRealtimeEnabled || isPluginModifying) {
+    // 只檢查是否為插件自己做的修改
+    if (isPluginModifying) {
         return;
     }
 
@@ -455,6 +458,13 @@ figma.ui.onmessage = async (msg) => {
         const chineseSettings = msg.chineseSettings;
         const englishSettings = msg.englishSettings;
         const numberSettings = msg.numberSettings;
+        
+        // 記錄最後套用的設定供即時轉換使用
+        lastAppliedSettings = {
+            chineseSettings,
+            englishSettings, 
+            numberSettings
+        };
 
         try {
             for (const node of textNodes) {
@@ -616,23 +626,4 @@ figma.ui.onmessage = async (msg) => {
         }
     }
 
-    else if (msg.type === 'enableRealtime') {
-        isRealtimeEnabled = true;
-        realtimeSettings.chineseSettings = msg.settings.chineseSettings;
-        realtimeSettings.englishSettings = msg.settings.englishSettings;
-        realtimeSettings.numberSettings = msg.settings.numberSettings;
-        
-        console.log('即時轉換已啟用');
-        figma.notify('即時轉換已啟用');
-    }
-
-    else if (msg.type === 'disableRealtime') {
-        isRealtimeEnabled = false;
-        realtimeSettings.chineseSettings = null;
-        realtimeSettings.englishSettings = null;
-        realtimeSettings.numberSettings = null;
-        
-        console.log('即時轉換已關閉');
-        figma.notify('即時轉換已關閉');
-    }
 };

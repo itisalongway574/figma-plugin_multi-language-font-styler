@@ -258,66 +258,21 @@
       display: none;
     }
 
-    /* 即時轉換 switch 樣式 */
-    .realtime-toggle-container {
+    /* 即時轉換狀態顯示 */
+    .realtime-status-container {
       margin-bottom: 20px;
-      background: #f8f8f8;
-      border-radius: 8px;
-      padding: 4px 12px;
-    }
-
-    .realtime-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
+      background: #f5efe4;
+      border-radius: 4px;
+      padding: 6px 8px;
     }
 
     .realtime-status {
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 11px;
       color: #999;
     }
 
     .realtime-status.enabled {
-      color: #9E7A4E;
-    }
-
-    .toggle-switch {
-      position: relative;
-      width: 40px;
-      height: 20px;
-      background: #ddd;
-      border-radius: 15px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .toggle-switch.active {
-      background: #9E7A4E;
-    }
-
-    .toggle-input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-      position: absolute;
-    }
-
-    .toggle-slider {
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 16px;
-      height: 16px;
-      background: white;
-      border-radius: 50%;
-      transition: transform 0.3s ease;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    .toggle-slider.active {
-      transform: translateX(20px);
+      color: #653f10;
     }
   </style>
 </head>
@@ -330,14 +285,8 @@
     請選擇包含文字的元素
   </div>
 
-  <div class="realtime-toggle-container">
-    <div class="realtime-row">
-      <div class="realtime-status" id="realtimeStatusText">未啟用即時轉換</div>
-      <div class="toggle-switch" id="toggleSwitch">
-        <input type="checkbox" id="realtimeToggle" class="toggle-input">
-        <span class="toggle-slider"></span>
-      </div>
-    </div>
+  <div class="realtime-status-container">
+    <div class="realtime-status enabled">即時轉換已啟用</div>
   </div>
 
   <div class="section">
@@ -1328,57 +1277,6 @@
     // 初始化时确保按钮样式正确
     ensureTypeSelectors();
 
-    // 即時轉換開關處理
-    const realtimeToggle = document.getElementById('realtimeToggle');
-    const toggleSwitch = document.getElementById('toggleSwitch');
-    const realtimeStatusText = document.getElementById('realtimeStatusText');
-
-    // 更新 switch 視覺狀態
-    function updateSwitchState(isEnabled) {
-      const toggleSlider = toggleSwitch.querySelector('.toggle-slider');
-
-      if (isEnabled) {
-        toggleSwitch.classList.add('active');
-        toggleSlider.classList.add('active');
-        realtimeStatusText.textContent = '啟用即時轉換';
-        realtimeStatusText.classList.add('enabled');
-      } else {
-        toggleSwitch.classList.remove('active');
-        toggleSlider.classList.remove('active');
-        realtimeStatusText.textContent = '未啟用即時轉換';
-        realtimeStatusText.classList.remove('enabled');
-      }
-    }
-
-    // 點擊 switch 區域觸發切換
-    toggleSwitch.addEventListener('click', function () {
-      realtimeToggle.checked = !realtimeToggle.checked;
-
-      // 手動觸發 change 事件
-      const changeEvent = new Event('change', { bubbles: true });
-      realtimeToggle.dispatchEvent(changeEvent);
-    });
-
-    realtimeToggle.addEventListener('change', function () {
-      const isEnabled = this.checked;
-
-      if (isEnabled) {
-        updateSwitchState(true);
-        parent.postMessage({
-          pluginMessage: {
-            type: 'enableRealtime',
-            settings: getCurrentSettings()
-          }
-        }, '*');
-      } else {
-        updateSwitchState(false);
-        parent.postMessage({
-          pluginMessage: {
-            type: 'disableRealtime'
-          }
-        }, '*');
-      }
-    });
 
     // 這個函數已經存在，不需要重複定義
   </script>
