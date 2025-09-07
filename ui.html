@@ -341,17 +341,17 @@
   </div>
 
   <div class="section">
+    <h3>已儲存預設組合</h3>
+    <div id="presetsList">
+      <!-- 預設組合列表將動態生成 -->
+    </div>
+
     <div class="form-row">
       <label>預設組合名稱</label>
       <input id="presetName" type="text" placeholder="輸入預設組合名稱">
     </div>
 
     <button id="savePresetButton">儲存組合</button>
-
-    <h3>已儲存預設組合</h3>
-    <div id="presetsList">
-      <!-- 預設組合列表將動態生成 -->
-    </div>
   </div>
 
   <div class="section">
@@ -1363,15 +1363,6 @@
       const isEnabled = this.checked;
 
       if (isEnabled) {
-        // 檢查是否設置了字型
-        const chineseSettings = getCurrentSettings().chineseSettings;
-        if (!chineseSettings || !chineseSettings.fontFamily) {
-          alert('請先設定中文字型後再啟用即時轉換');
-          this.checked = false;
-          updateSwitchState(false);  // 確保視覺狀態同步
-          return;
-        }
-
         updateSwitchState(true);
         parent.postMessage({
           pluginMessage: {
