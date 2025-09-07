@@ -1,40 +1,208 @@
-Below are the steps to get your plugin running. You can also find instructions at:
+# dev複合字型轉換器 - Figma Plugin
 
-  https://www.figma.com/plugin-docs/plugin-quickstart-guide/
+一個智慧的Figma插件，專為混合語言文件設計，能夠自動識別中文、英文和數字字符，並套用不同的字型設定。插件具備即時轉換功能，讓您在輸入文字時自動應用字型設定。
 
-This plugin template uses Typescript and NPM, two standard tools in creating JavaScript applications.
+## 🎯 主要功能
 
-First, download Node.js which comes with NPM. This will allow you to install TypeScript and other
-libraries. You can find the download link here:
+### 智慧字符識別
+- **中文字符**：自動識別繁體中文、簡體中文、日文漢字等
+- **英文字符**：識別英文字母和標點符號
+- **數字字符**：識別阿拉伯數字
+- **其他字符**：支援其他符號和特殊字符
 
-  https://nodejs.org/en/download/
+### 字型設定選項
+- **字型模式**：選擇特定字體家族和字重
+- **樣式模式**：使用Figma的Text Style
+- **字型大小**：支援預設大小或自訂尺寸
+- **字重保持**：可選擇維持原始字重設定
 
-Next, install TypeScript using the command:
+### 即時轉換功能
+- **總是啟用**：插件啟動後自動開啟即時轉換
+- **智慧偵測**：輸入文字時自動套用字型設定
+- **防抖機制**：優化性能，避免頻繁處理
 
-  npm install -g typescript
+### 預設組合管理
+- **內建組合**：「思源宋+Roboto Slab」不可刪除的預設組合
+- **自訂組合**：儲存個人化的字型組合設定
+- **雲端同步**：設定與Figma帳戶同步，跨裝置可用
 
-Finally, in the directory of your plugin, get the latest type definitions for the plugin API by running:
+## 🚀 快速開始
 
-  npm install --save-dev @figma/plugin-typings
+### 環境需求
+- Node.js (建議使用最新LTS版本)
+- TypeScript
+- Figma桌面版或網頁版
 
-If you are familiar with JavaScript, TypeScript will look very familiar. In fact, valid JavaScript code
-is already valid Typescript code.
+### 安裝步驟
 
-TypeScript adds type annotations to variables. This allows code editors such as Visual Studio Code
-to provide information about the Figma API while you are writing code, as well as help catch bugs
-you previously didn't notice.
+1. **安裝Node.js**
+   ```bash
+   # 前往 https://nodejs.org/en/download/ 下載並安裝
+   ```
 
-For more information, visit https://www.typescriptlang.org/
+2. **安裝全域TypeScript**
+   ```bash
+   npm install -g typescript
+   ```
 
-Using TypeScript requires a compiler to convert TypeScript (code.ts) into JavaScript (code.js)
-for the browser to run.
+3. **安裝專案相依套件**
+   ```bash
+   npm install --save-dev @figma/plugin-typings
+   npm install
+   ```
 
-We recommend writing TypeScript code using Visual Studio code:
+4. **編譯TypeScript**
+   ```bash
+   # 一次性編譯
+   npm run build
+   
+   # 監聽模式（推薦開發時使用）
+   npm run watch
+   ```
 
-1. Download Visual Studio Code if you haven't already: https://code.visualstudio.com/.
-2. Open this directory in Visual Studio Code.
-3. Compile TypeScript to JavaScript: Run the "Terminal > Run Build Task..." menu item,
-    then select "npm: watch". You will have to do this again every time
-    you reopen Visual Studio Code.
+5. **在Figma中載入插件**
+   - 開啟Figma
+   - 前往 Plugins > Development > Import plugin from manifest
+   - 選擇此專案的 `manifest.json` 檔案
 
-That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
+### 開發指令
+
+```bash
+# 編譯TypeScript
+npm run build
+
+# 監聽檔案變化並自動編譯
+npm run watch
+
+# 程式碼檢查
+npm run lint
+
+# 自動修復程式碼風格問題
+npm run lint:fix
+```
+
+## 📖 使用方式
+
+### 基本操作
+
+1. **選擇目標元件**
+   - 選擇包含文字的Figma元件
+   - 插件會自動偵測選取範圍內的文字圖層
+
+2. **設定字型參數**
+   - **中文設定**：選擇中文字符使用的字型或樣式
+   - **英文設定**：選擇英文字符使用的字型或樣式  
+   - **數字設定**：可選擇同步英文設定或獨立設定
+
+3. **應用設定**
+   - 點擊「應用樣式」按鈕套用設定
+   - 即時轉換功能會自動記住此次設定
+
+### 進階功能
+
+#### 預設組合使用
+- 使用內建的「思源宋+Roboto Slab」組合
+- 建立自訂組合並儲存供日後使用
+- 一鍵載入已儲存的組合設定
+
+#### 即時轉換
+- 套用設定後，新輸入的文字會自動轉換
+- 支援編輯現有文字時的即時轉換
+- 智慧避免無限迴圈的轉換衝突
+
+## 🛠 技術架構
+
+### 檔案結構
+```
+├── manifest.json       # 插件設定檔
+├── code.ts            # 主要邏輯程式碼
+├── ui.html            # 使用者介面
+├── code.js            # 編譯後的JavaScript (自動生成)
+├── tsconfig.json      # TypeScript設定
+├── package.json       # NPM專案設定
+└── README.md          # 專案說明文件
+```
+
+### 核心技術
+- **TypeScript**：型別安全的JavaScript開發
+- **Figma Plugin API**：與Figma整合的官方API
+- **客戶端儲存**：使用`figma.clientStorage`儲存使用者設定
+- **文件事件監聽**：實現即時轉換功能
+- **正規表達式**：精準的字符類型識別
+
+### 字符識別邏輯
+```typescript
+function getCharacterType(char: string) {
+  // 中文字符 (包含繁體、簡體中文、日文漢字等)
+  if (/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/.test(char)) {
+    return 'chinese';
+  }
+  // 英文字符
+  if (/[a-zA-Z]/.test(char)) {
+    return 'english';
+  }
+  // 數字字符
+  if (/[0-9]/.test(char)) {
+    return 'number';
+  }
+  return 'other';
+}
+```
+
+## 🎨 介面設計
+
+### 使用者體驗
+- **直觀操作**：清晰的視覺層次和操作流程
+- **即時回饋**：狀態指示器和通知訊息
+- **響應式設計**：適應不同螢幕尺寸
+
+### 視覺風格
+- **配色方案**：溫暖的棕色調主題
+- **按鈕設計**：清楚的主要/次要按鈕區別
+- **字型顯示**：使用系統字型確保一致性
+
+## 📋 版本資訊
+
+### 當前版本：20250907
+
+#### 主要更新
+- ✅ 全面重構即時轉換功能，總是啟用無需手動開關
+- ✅ 新增內建「思源宋+Roboto Slab」預設組合
+- ✅ 優化字符識別演算法，提升準確度
+- ✅ 改善使用者介面設計和互動體驗
+- ✅ 強化錯誤處理和效能優化
+
+## 🤝 開發貢獻
+
+### 程式碼風格
+- 使用ESLint進行程式碼檢查
+- 遵循TypeScript最佳實踐
+- 保持程式碼註解的完整性
+
+### 測試建議
+1. 測試不同語言的文字混合場景
+2. 驗證各種字型和樣式的相容性
+3. 確認即時轉換功能的穩定性
+4. 檢查預設組合的載入和使用
+
+## 📄 授權資訊
+
+此專案遵循相關開源授權條款。
+
+## 🆘 常見問題
+
+**Q: 為什麼某些字型無法正確載入？**
+A: 請確認該字型已安裝在您的系統中，或在Figma中可用。
+
+**Q: 即時轉換不生效怎麼辦？**
+A: 請先套用一次樣式設定，即時轉換會記住您的最後設定。
+
+**Q: 可以自訂字符識別規則嗎？**
+A: 目前版本使用固定的識別邏輯，未來版本會考慮加入自訂功能。
+
+**Q: 如何備份我的預設組合？**
+A: 預設組合會自動與您的Figma帳戶同步，無需手動備份。
+
+---
+
+如有任何問題或建議，歡迎提出Issue或Pull Request！
