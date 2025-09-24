@@ -1,70 +1,103 @@
 # CLAUDE.md
 
-此檔案為 Claude Code (claude.ai/code) 在此專案中工作時的指導文件。
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 專案概述
+## Project Overview
 
-這是一個名為「dev複合字型轉換器」的 Figma 外掛，可以自動為文字圖層中的中文、英文和數字字元套用不同的字型。外掛會逐字分析文字內容，並根據語言類型套用適當的字型設定。
+This is a Figma plugin called "複合字型轉換器" (Mixed Font Converter) that automatically applies different fonts to Chinese, English, and numeric characters in text layers. The plugin analyzes text character by character and applies appropriate font settings based on language type.
 
-## 開發指令
+## Development Commands
 
 ```bash
-# 將 TypeScript 編譯為 JavaScript
+# Compile TypeScript to JavaScript
 npm run build
 
-# 編譯並監控檔案變更（開發模式）
+# Compile and watch for file changes (development mode)
 npm run watch
 
-# 檢查 TypeScript 程式碼規範
+# Check TypeScript code standards
 npm run lint
 
-# 自動修正程式碼規範問題
+# Auto-fix code standard issues
 npm run lint:fix
+
+# Update version with current date in ui.html
+npm run update-version
+
+# Build and prepare release
+npm run release
+
+# Package plugin files for distribution
+npm run package
 ```
 
-## 專案結構
+## Project Structure
 
-- `code.ts` - 主要外掛邏輯（編譯為 `code.js`）
-- `ui.html` - 外掛使用者介面，包含嵌入的 CSS 和 JavaScript
-- `manifest.json` - Figma 外掛設定檔
-- `tsconfig.json` - TypeScript 設定檔
-- `package.json` - 相依套件和建置腳本
+- `code.ts` - Main plugin logic (compiles to `code.js`)
+- `ui.html` - Plugin user interface with embedded CSS and JavaScript
+- `manifest.json` - Figma plugin configuration file
+- `tsconfig.json` - TypeScript configuration
+- `package.json` - Dependencies and build scripts
+- `RELEASE_NOTES.md` - Release information and changelog
 
-## 核心架構
+## Core Architecture
 
-### 主要外掛檔案 (`code.ts`)
-- **字元分析**：使用正規表達式模式檢測中文字元（`\u4e00-\u9fff`）、英文字母和數字
-- **文字分段**：分析文字並為每種字元類型建立不同字型設定的段落
-- **字型管理**：載入可用字型並按字型家族分組
-- **預設集系統**：透過 `figma.clientStorage` 儲存/載入字型設定預設集
-- **介面通訊**：使用 `figma.ui.postMessage()` 進行外掛 ↔ 介面通訊
+### Main Plugin File (`code.ts`)
+- **Character Analysis**: Uses regex patterns to detect Chinese characters (`\u4e00-\u9fff`), English letters, and numbers
+- **Text Segmentation**: Analyzes text and creates segments with different font settings for each character type
+- **Font Management**: Loads available fonts and groups by font family, with automatic weight selection
+- **Preset System**: Stores/loads font setting presets via `figma.clientStorage`
+- **Real-time Conversion**: Always-enabled feature that automatically applies font settings when text changes
+- **UI Communication**: Uses `figma.ui.postMessage()` for plugin ↔ interface communication
 
-### 關鍵函式
-- `loadTextStyles()` - 載入現有的 Figma 文字樣式
-- `loadAvailableFonts()` - 取得並整理可用字型
-- `getCharacterType()` - 判斷字元是中文、英文、數字或其他
-- `analyzeTextSegments()` - 建立具有適當字型設定的文字段落
-- `loadExistingFontsInNode()` - 分析選取文字中現有的字型
+### Key Functions
+- `loadTextStyles()` - Load existing Figma text styles
+- `loadAvailableFonts()` - Get and organize available fonts with family grouping
+- `getCharacterType()` - Determine if character is Chinese, English, number, or other
+- `analyzeTextSegments()` - Create text segments with appropriate font settings
+- `loadExistingFontsInNode()` - Analyze existing fonts in selected text nodes
+- `triggerRealtimeConversionForNode()` - Real-time conversion for individual text nodes
+- `getClosestFontWeight()` - Automatically select closest available font weight
+- `findSimilarWeights()` - Find similar font weights when exact match unavailable
 
-### 使用者介面 (`ui.html`)
-單一 HTML 檔案包含：
-- 中文、英文和數字文字的字型選擇下拉選單
-- 預設集管理（儲存/載入/刪除設定）
-- 套用按鈕以處理選取的文字圖層
-- 嵌入的 CSS 樣式和 JavaScript 互動功能
+### User Interface (`ui.html`)
+Single HTML file containing:
+- Font selection dropdowns for Chinese, English, and number text
+- Preset management (save/load/delete settings) with built-in "思源宋+Roboto Slab" preset
+- Apply button to process selected text layers
+- Embedded CSS styling and JavaScript interaction logic
 
-## 字型處理邏輯
+## Font Processing Logic
 
-1. 外掛分析選取文字節點中的每個字元
-2. 將字元分類為中文、英文、數字或其他
-3. 將相同類型的連續字元組合成段落
-4. 為每種段落類型套用不同的字型家族/樣式
-5. 保留其他文字屬性（大小、顏色等）
+1. Plugin analyzes each character in selected text nodes
+2. Classifies characters as Chinese, English, number, or other
+3. Groups consecutive characters of same type into segments
+4. Applies different font families/styles for each segment type
+5. Preserves original font weight when possible, or finds closest match
+6. Maintains other text properties (size, color, etc.)
+7. Real-time conversion automatically applies last settings to new text
 
-## 開發備註
+## Technical Implementation Details
 
-- 外掛針對 ES6 並需要 TypeScript 編譯
-- 使用 Figma Plugin API v1.0.0
-- 需要 `currentuser` 權限以存取字型
-- 字型設定儲存在瀏覽器的客戶端儲存空間
-- 介面透過訊息傳遞與外掛後端通訊
+- **Target**: ES6 compilation with TypeScript
+- **API**: Figma Plugin API v1.0.0
+- **Permissions**: Requires `currentuser` permission for font access
+- **Storage**: Font settings stored in browser's client storage space
+- **Communication**: Message passing between plugin backend and UI
+- **Performance**: Debounced real-time conversion (400ms delay) to optimize performance
+- **Version Management**: Automatic date-based version updates in UI
+- **Release Process**: Automated packaging of `manifest.json`, `ui.html`, and `code.js`
+
+## Character Detection Patterns
+
+- **Chinese**: `[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]` (Traditional/Simplified Chinese, Japanese Kanji)
+- **English**: `[a-zA-Z]` (Uppercase and lowercase letters)
+- **Numbers**: `[0-9]` (Arabic numerals)
+- **Other**: Everything else (punctuation, spaces, symbols)
+
+## Plugin State Management
+
+- `isPluginModifying`: Prevents infinite loops during real-time conversion
+- `lastAppliedSettings`: Stores last applied settings for real-time conversion
+- `debounceTimeout`: Manages performance optimization for real-time updates
+- `fontFamiliesData`: Cached font family data for weight matching
